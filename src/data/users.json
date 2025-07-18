@@ -1,0 +1,60 @@
+{
+  "users": {
+    "teachers": [
+      {
+        "id": "T001",
+        "username": "teacher1",
+        "password": "password123",
+        "name": "Dr. Rajesh Kumar",
+        "email": "rajesh@tuitionplus.com",
+        "phone": "+91 9876543210",
+        "subjects": ["Mathematics", "Physics"],
+        "experience": "15 years"
+      }
+    ],
+    "students": [
+      {
+        "id": "S001",
+        "username": "student1",
+        "password": "student123",
+        "name": "Priya Sharma",
+        "email": "priya@email.com",
+        "phone": "+91 9876543211",
+        "class": "10th",
+        "subjects": ["Mathematics", "Physics", "Chemistry"],
+        "parent_id": "P001"
+      },
+      {
+        "id": "S002",
+        "username": "student2", 
+        "password": "student123",
+        "name": "Arjun Singh",
+        "email": "arjun@email.com",
+        "phone": "+91 9876543212",
+        "class": "12th",
+        "subjects": ["Mathematics", "Physics"],
+        "parent_id": "P002"
+      }
+    ],
+    "parents": [
+      {
+        "id": "P001",
+        "username": "parent1",
+        "password": "parent123",
+        "name": "Suresh Sharma",
+        "email": "suresh@email.com",
+        "phone": "+91 9876543213",
+        "children": ["S001"]
+      },
+      {
+        "id": "P002",
+        "username": "parent2",
+        "password": "parent123", 
+        "name": "Meera Singh",
+        "email": "meera@email.com",
+        "phone": "+91 9876543214",
+        "children": ["S002"]
+      }
+    ]
+  }
+}

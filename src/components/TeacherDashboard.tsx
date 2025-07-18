@@ -1,0 +1,157 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Header } from "@/components/Header";
+import { 
+  Users, 
+  DollarSign, 
+  BookOpen, 
+  ClipboardList, 
+  Calendar,
+  TrendingUp,
+  Bell,
+  LogOut
+} from "lucide-react";
+
+export const TeacherDashboard = () => {
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    const userType = localStorage.getItem('userType');
+    
+    if (!storedUsername || userType !== 'teacher') {
+      navigate('/');
+      return;
+    }
+    
+    setUsername(storedUsername);
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userType');
+    localStorage.removeItem('username');
+    navigate('/');
+  };
+
+  const dashboardCards = [
+    {
+      title: "Total Students",
+      value: "24",
+      description: "Active students",
+      icon: <Users className="h-6 w-6" />,
+      color: "bg-gradient-primary"
+    },
+    {
+      title: "Monthly Revenue",
+      value: "₹45,000",
+      description: "Current month",
+      icon: <DollarSign className="h-6 w-6" />,
+      color: "bg-gradient-accent"
+    },
+    {
+      title: "Pending Fees",
+      value: "₹8,500",
+      description: "Outstanding amount",
+      icon: <TrendingUp className="h-6 w-6" />,
+      color: "bg-gradient-primary"
+    },
+    {
+      title: "Active Classes",
+      value: "12",
+      description: "This week",
+      icon: <Calendar className="h-6 w-6" />,
+      color: "bg-gradient-accent"
+    }
+  ];
+
+  const quickActions = [
+    { title: "Manage Students", description: "Add/Edit student information", icon: <Users className="h-5 w-5" /> },
+    { title: "Fee Management", description: "Track payments and dues", icon: <DollarSign className="h-5 w-5" /> },
+    { title: "Create Tests", description: "Generate question papers", icon: <BookOpen className="h-5 w-5" /> },
+    { title: "Assign Homework", description: "Post new assignments", icon: <ClipboardList className="h-5 w-5" /> },
+    { title: "Class Schedule", description: "Manage timings", icon: <Calendar className="h-5 w-5" /> },
+    { title: "Syllabus Tracker", description: "Track completion", icon: <TrendingUp className="h-5 w-5" /> }
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      {/* Dashboard Header */}
+      <section className="bg-gradient-primary text-primary-foreground py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Welcome back, {username}!</h1>
+              <p className="text-primary-foreground/80">Teacher Dashboard - Tuition Plus</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="outline" size="sm" className="text-primary bg-white hover:bg-white/90">
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="text-primary bg-white hover:bg-white/90">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics Cards */}
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {dashboardCards.map((card, index) => (
+              <Card key={index} className="shadow-elegant hover:shadow-glow transition-all duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {card.title}
+                  </CardTitle>
+                  <div className={`p-2 rounded-lg ${card.color} text-white`}>
+                    {card.icon}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{card.value}</div>
+                  <p className="text-xs text-muted-foreground">{card.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Quick Actions */}
+          <Card className="shadow-elegant">
+            <CardHeader>
+              <CardTitle className="text-xl">Quick Actions</CardTitle>
+              <CardDescription>Frequently used functions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {quickActions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-start space-y-2 hover:bg-muted transition-all"
+                  >
+                    <div className="flex items-center space-x-2">
+                      {action.icon}
+                      <span className="font-medium">{action.title}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground text-left">
+                      {action.description}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </div>
+  );
+};

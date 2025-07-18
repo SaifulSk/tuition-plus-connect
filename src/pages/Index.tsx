@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { LoginCard } from "@/components/LoginCard";
@@ -8,12 +8,11 @@ import { GraduationCap, Users, UserCheck, BookOpen, Calculator, Trophy, Star } f
 import heroImage from "@/assets/hero-education.jpg";
 
 const Index = () => {
-  const [selectedUserType, setSelectedUserType] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleLogin = (userType: string) => {
-    setSelectedUserType(userType);
-    // Here we'll implement actual login logic later
-    console.log(`Login as ${userType}`);
+    // Navigate to the appropriate login page
+    navigate(`/${userType}-login`);
   };
 
   const features = [

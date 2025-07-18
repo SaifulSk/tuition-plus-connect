@@ -1,0 +1,44 @@
+{
+  "fee_records": [
+    {
+      "student_id": "S001",
+      "student_name": "Priya Sharma",
+      "month": "January 2024",
+      "amount_due": 3000,
+      "amount_paid": 3000,
+      "payment_date": "2024-01-05",
+      "status": "Paid",
+      "payment_method": "Cash"
+    },
+    {
+      "student_id": "S001",
+      "student_name": "Priya Sharma", 
+      "month": "February 2024",
+      "amount_due": 3000,
+      "amount_paid": 0,
+      "payment_date": null,
+      "status": "Pending",
+      "payment_method": null
+    },
+    {
+      "student_id": "S002",
+      "student_name": "Arjun Singh",
+      "month": "January 2024", 
+      "amount_due": 2500,
+      "amount_paid": 2500,
+      "payment_date": "2024-01-03",
+      "status": "Paid",
+      "payment_method": "Online"
+    },
+    {
+      "student_id": "S002",
+      "student_name": "Arjun Singh",
+      "month": "February 2024",
+      "amount_due": 2500,
+      "amount_paid": 2500,
+      "payment_date": "2024-02-01",
+      "status": "Paid", 
+      "payment_method": "Online"
+    }
+  ]
+}
