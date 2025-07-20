@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Navy Blue and Maroon Theme for Tuition Plus */
+    /* Navy Blue and Maroon Theme matching the Tuition Plus Logo */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -18,38 +18,38 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Navy Blue Primary */
-    --primary: 220 100% 20%;
+    /* Navy Blue Primary - matching logo */
+    --primary: 210 100% 15%;
     --primary-foreground: 0 0% 98%;
-    --primary-hover: 220 100% 25%;
+    --primary-hover: 210 100% 20%;
 
-    /* Maroon Accent */
-    --accent: 0 100% 25%;
+    /* Maroon/Red Accent - matching logo */
+    --accent: 0 85% 45%;
     --accent-foreground: 0 0% 98%;
-    --accent-hover: 0 100% 30%;
+    --accent-hover: 0 85% 50%;
 
     /* Secondary Navy */
-    --secondary: 220 60% 95%;
-    --secondary-foreground: 220 100% 20%;
+    --secondary: 210 60% 95%;
+    --secondary-foreground: 210 100% 15%;
 
-    --muted: 220 20% 96%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 210 10% 45%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 220 100% 20%;
+    --ring: 210 100% 15%;
 
-    /* Custom Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(220 100% 20%), hsl(220 100% 30%));
-    --gradient-accent: linear-gradient(135deg, hsl(0 100% 25%), hsl(0 100% 35%));
-    --gradient-hero: linear-gradient(135deg, hsl(220 100% 20%), hsl(0 100% 25%));
+    /* Custom Gradients matching logo colors */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 15%), hsl(210 100% 20%));
+    --gradient-accent: linear-gradient(135deg, hsl(0 85% 45%), hsl(0 85% 50%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 15%), hsl(0 85% 45%));
 
     /* Shadows */
-    --shadow-elegant: 0 10px 30px -10px hsl(220 100% 20% / 0.3);
-    --shadow-glow: 0 0 40px hsl(220 100% 30% / 0.4);
+    --shadow-elegant: 0 10px 30px -10px hsl(210 100% 15% / 0.3);
+    --shadow-glow: 0 0 40px hsl(210 100% 20% / 0.4);
 
     --radius: 0.5rem;
 

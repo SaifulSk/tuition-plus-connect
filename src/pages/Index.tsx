@@ -5,7 +5,6 @@ import { LoginCard } from "@/components/LoginCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, Users, UserCheck, BookOpen, Calculator, Trophy, Star } from "lucide-react";
-import heroImage from "@/assets/hero-education.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -44,23 +43,25 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="relative bg-gradient-hero text-primary-foreground py-20">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-30"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        ></div>
         <div className="relative container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
+            <div className="flex justify-center mb-8">
+              <img 
+                src="/lovable-uploads/b80c3abe-d591-40e9-ba09-0089e9be5ce7.png" 
+                alt="Tuition Plus Logo" 
+                className="h-40 w-auto drop-shadow-2xl animate-fade-in"
+              />
+            </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">
-              Welcome to <span className="text-accent">Tuition Plus</span>
+              Welcome to <span className="text-accent-foreground">Tuition Plus</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-primary-foreground/90 animate-fade-in">
-              Comprehensive Coaching Management Platform
+              Empowering Young Minds Since 2018
             </p>
             <p className="text-lg mb-12 text-primary-foreground/80 animate-fade-in">
               Streamline your coaching center operations with our all-in-one platform designed for teachers, students, and parents.
             </p>
-            <Button variant="hero" size="lg" className="animate-slide-in">
+            <Button variant="hero" size="lg" className="animate-slide-in bg-white text-primary hover:bg-white/90">
               Get Started Today
             </Button>
           </div>
