@@ -2,41 +2,56 @@
   "homework": [
     {
       "id": "HW001",
-      "student_id": "S001",
-      "student_name": "Priya Sharma",
-      "subject": "Mathematics",
       "title": "Chapter 5: Quadratic Equations",
+      "subject": "Mathematics",
       "description": "Solve exercises 5.1 to 5.3 from textbook",
       "assigned_date": "2024-02-01",
       "due_date": "2024-02-05",
-      "status": "Pending",
-      "parent_acknowledged": false
+      "assigned_to": ["S001"],
+      "submissions": [
+        {
+          "student_id": "S001",
+          "student_name": "Priya Sharma",
+          "status": "Pending",
+          "parent_acknowledgment": false
+        }
+      ]
     },
     {
       "id": "HW002",
-      "student_id": "S001", 
-      "student_name": "Priya Sharma",
-      "subject": "Physics",
       "title": "Light and Reflection",
+      "subject": "Physics",
       "description": "Complete numerical problems from chapter 10",
       "assigned_date": "2024-02-02",
       "due_date": "2024-02-06",
-      "status": "Completed",
-      "parent_acknowledged": true,
-      "submitted_date": "2024-02-05"
+      "assigned_to": ["S001"],
+      "submissions": [
+        {
+          "student_id": "S001",
+          "student_name": "Priya Sharma",
+          "status": "Completed",
+          "submitted_date": "2024-02-05",
+          "parent_acknowledgment": true
+        }
+      ]
     },
     {
       "id": "HW003",
-      "student_id": "S002",
-      "student_name": "Arjun Singh", 
-      "subject": "Mathematics",
       "title": "Integration Practice",
+      "subject": "Mathematics",
       "description": "Solve integration problems from chapter 7",
       "assigned_date": "2024-02-01",
       "due_date": "2024-02-04",
-      "status": "Completed",
-      "parent_acknowledged": true,
-      "submitted_date": "2024-02-03"
+      "assigned_to": ["S002"],
+      "submissions": [
+        {
+          "student_id": "S002",
+          "student_name": "Arjun Singh",
+          "status": "Completed",
+          "submitted_date": "2024-02-03",
+          "parent_acknowledgment": true
+        }
+      ]
     }
   ]
 }
