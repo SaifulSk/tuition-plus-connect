@@ -9,7 +9,11 @@ export const Footer = () => {
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 bg-white/10 rounded-lg">
-                <GraduationCap className="h-6 w-6" />
+                <img 
+              src="/lovable-uploads/1.png" 
+              alt="Tuition Plus Logo" 
+              className="h-10 w-auto"
+            />
               </div>
               <h3 className="text-xl font-bold">Tuition Plus</h3>
             </div>
