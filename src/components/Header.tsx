@@ -7,7 +7,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img 
-              src="/lovable-uploads/b80c3abe-d591-40e9-ba09-0089e9be5ce7.png" 
+              src="/lovable-uploads/1.png" 
               alt="Tuition Plus Logo" 
               className="h-10 w-auto"
             />
