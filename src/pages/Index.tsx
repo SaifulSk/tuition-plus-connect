@@ -47,7 +47,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto">
             <div className="flex justify-center mb-8">
               <img 
-                src="/lovable-uploads/b80c3abe-d591-40e9-ba09-0089e9be5ce7.png" 
+                src="/lovable-uploads/1.png" 
                 alt="Tuition Plus Logo" 
                 className="h-40 w-auto drop-shadow-2xl animate-fade-in"
               />
