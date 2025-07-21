@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { StudentManagement } from "@/components/StudentManagement";
 import { FeeManagement } from "@/components/FeeManagement";
 import { HomeworkManagement } from "@/components/HomeworkManagement";
+import { TestManagement } from "@/components/TestManagement";
 import { 
   Users, 
   DollarSign, 
@@ -119,12 +120,7 @@ export const TeacherDashboard = () => {
       case "homework":
         return <HomeworkManagement />;
       case "tests":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Test Management</h2>
-            <p className="text-muted-foreground">Test creation feature coming soon...</p>
-          </div>
-        );
+        return <TestManagement />;
       case "schedule":
         return (
           <div className="space-y-6">
