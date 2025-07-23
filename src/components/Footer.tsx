@@ -57,7 +57,7 @@ export const Footer = () => {
                 <Clock className="h-4 w-4 text-accent" />
                 <div>
                   <p className="text-sm font-medium">Saturday - Sunday</p>
-                  <p className="text-xs text-primary-foreground/80">10:00 AM - 8:00 PM</p>
+                  <p className="text-xs text-primary-foreground/80">8:00 AM - 8:00 PM</p>
                 </div>
               </div>
             </div>
