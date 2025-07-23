@@ -70,7 +70,11 @@ export const LoginPage = ({ userType }: LoginPageProps) => {
             <Card className="shadow-elegant">
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 p-3 rounded-full bg-gradient-primary text-primary-foreground w-16 h-16 flex items-center justify-center">
-                  <GraduationCap className="h-8 w-8" />
+                  <img 
+                    src="/lovable-uploads/1.png" 
+                    alt="Tuition Plus Logo" 
+                    className="h-10 w-auto"
+                  />
                 </div>
                 <CardTitle className="text-2xl font-bold">{config.title}</CardTitle>
                 <CardDescription>{config.description}</CardDescription>
