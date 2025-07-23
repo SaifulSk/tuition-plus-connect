@@ -29,15 +29,15 @@ export const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 w-4 text-accent" />
-                <span className="text-sm">123 Education Street, Learning City, LC 12345</span>
+                <span className="text-sm">Pirtala, Baruipur Road, WB, Pin - 743503 (Below Pirtala Nursing Home)</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-accent" />
-                <span className="text-sm">+91 9999999999</span>
+                <span className="text-sm">+91 8013753344</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 text-accent" />
-                <span className="text-sm">info@tuitionplus.com</span>
+                <span className="text-sm">mdsaifulhassansk@gmail.com</span>
               </div>
             </div>
           </div>
@@ -49,15 +49,15 @@ export const Footer = () => {
               <div className="flex items-center space-x-3">
                 <Clock className="h-4 w-4 text-accent" />
                 <div>
-                  <p className="text-sm font-medium">Monday - Saturday</p>
-                  <p className="text-xs text-primary-foreground/80">9:00 AM - 8:00 PM</p>
+                  <p className="text-sm font-medium">Monday - Friday</p>
+                  <p className="text-xs text-primary-foreground/80">4:00 PM - 8:00 PM</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Clock className="h-4 w-4 text-accent" />
                 <div>
-                  <p className="text-sm font-medium">Sunday</p>
-                  <p className="text-xs text-primary-foreground/80">10:00 AM - 6:00 PM</p>
+                  <p className="text-sm font-medium">Saturday - Sunday</p>
+                  <p className="text-xs text-primary-foreground/80">10:00 AM - 8:00 PM</p>
                 </div>
               </div>
             </div>
