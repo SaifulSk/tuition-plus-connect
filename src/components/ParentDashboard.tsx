@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { ParentReports } from "@/components/ParentReports";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
   User, 
   ClipboardCheck, 
@@ -19,23 +21,48 @@ export const ParentDashboard = () => {
   const [username, setUsername] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    const userType = localStorage.getItem('userType');
-    
-    if (!storedUsername || userType !== 'parent') {
-      navigate('/');
-      return;
-    }
-    
-    setUsername(storedUsername);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/parent-login');
+        return;
+      }
+      
+      setUsername(session.user.email || "Parent");
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/parent-login');
+      } else if (session) {
+        setUsername(session.user.email || "Parent");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('userType');
-    localStorage.removeItem('username');
-    navigate('/');
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Logout Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logged Out",
+        description: "You have been logged out successfully.",
+      });
+      navigate('/');
+    }
   };
 
   const dashboardCards = [

@@ -10,8 +10,8 @@ const Index = () => {
   const navigate = useNavigate();
 
   const handleLogin = (userType: string) => {
-    // Navigate to the appropriate login page
-    navigate(`/${userType}-login`);
+    // Navigate to the new auth page with user type
+    navigate(`/auth?type=${userType}`);
   };
 
   const features = [

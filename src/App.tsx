@@ -7,7 +7,7 @@ import Index from "./pages/Index";
 import TeacherLogin from "./pages/TeacherLogin";
 import StudentLogin from "./pages/StudentLogin";
 import ParentLogin from "./pages/ParentLogin";
-import AuthPage from "./pages/AuthPage";
+import { Auth } from "./pages/Auth";
 import TeacherDashboardPage from "./pages/TeacherDashboardPage";
 import StudentDashboardPage from "./pages/StudentDashboardPage";
 import ParentDashboardPage from "./pages/ParentDashboardPage";
@@ -23,7 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/teacher-login" element={<TeacherLogin />} />
           <Route path="/student-login" element={<StudentLogin />} />
           <Route path="/parent-login" element={<ParentLogin />} />

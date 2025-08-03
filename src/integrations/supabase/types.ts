@@ -14,7 +14,311 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fees: {
+        Row: {
+          amount_due: number
+          amount_paid: number | null
+          created_at: string
+          id: string
+          month: string
+          payment_date: string | null
+          payment_method: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number | null
+          created_at?: string
+          id?: string
+          month: string
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number | null
+          created_at?: string
+          id?: string
+          month?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homework: {
+        Row: {
+          assigned_by: string
+          assigned_date: string
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          subject: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by: string
+          assigned_date?: string
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          subject: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string
+          assigned_date?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          subject?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homework_submissions: {
+        Row: {
+          created_at: string
+          homework_id: string
+          id: string
+          parent_acknowledged: boolean | null
+          status: string
+          student_id: string
+          submitted_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          homework_id: string
+          id?: string
+          parent_acknowledged?: boolean | null
+          status?: string
+          student_id: string
+          submitted_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          homework_id?: string
+          id?: string
+          parent_acknowledged?: boolean | null
+          status?: string
+          student_id?: string
+          submitted_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_submissions_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homework"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+          user_type: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+          user_type: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          class: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          parent_id: string | null
+          phone: string | null
+          subjects: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          class: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          phone?: string | null
+          subjects: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          class?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          phone?: string | null
+          subjects?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_results: {
+        Row: {
+          created_at: string
+          id: string
+          marks_obtained: number
+          student_id: string
+          test_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          marks_obtained: number
+          student_id: string
+          test_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          marks_obtained?: number
+          student_id?: string
+          test_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_results_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tests: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          max_marks: number
+          subject: string
+          test_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          max_marks: number
+          subject: string
+          test_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          max_marks?: number
+          subject?: string
+          test_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
