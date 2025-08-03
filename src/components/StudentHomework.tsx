@@ -25,10 +25,9 @@ interface Homework {
 interface Submission {
   student_id: string;
   student_name: string;
-  submission_text: string;
-  submitted_date: string;
-  status: string;
-  parent_acknowledged: boolean;
+  status: "Pending" | "Completed" | "Late";
+  submitted_date?: string;
+  parent_acknowledgment: boolean;
 }
 
 export const StudentHomework = () => {
@@ -43,7 +42,7 @@ export const StudentHomework = () => {
     const studentHomework = homeworkData.homework.filter(hw => 
       hw.assigned_to.includes(currentStudentId)
     );
-    setHomework(studentHomework);
+    setHomework(studentHomework as Homework[]);
   }, []);
 
   const handleSubmitHomework = () => {
@@ -51,10 +50,9 @@ export const StudentHomework = () => {
       const newSubmission: Submission = {
         student_id: currentStudentId,
         student_name: "Priya Sharma", // This would come from user data
-        submission_text: submissionText,
         submitted_date: new Date().toISOString().split('T')[0],
-        status: "submitted",
-        parent_acknowledged: false
+        status: "Completed",
+        parent_acknowledgment: false
       };
 
       const updatedHomework = homework.map(hw => {
@@ -86,8 +84,7 @@ export const StudentHomework = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "submitted": return "default";
-      case "completed": return "secondary";
+      case "Completed": return "default";
       case "overdue": return "destructive";
       default: return "outline";
     }
@@ -100,7 +97,7 @@ export const StudentHomework = () => {
 
   const completedHomework = homework.filter(hw => {
     const status = getHomeworkStatus(hw);
-    return status === "submitted" || status === "completed";
+    return status === "Completed";
   });
 
   return (
@@ -256,7 +253,7 @@ export const StudentHomework = () => {
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Submitted
                         </Badge>
-                        {submission?.parent_acknowledged && (
+                        {submission?.parent_acknowledgment && (
                           <Badge variant="secondary">Parent Reviewed</Badge>
                         )}
                       </div>
@@ -266,11 +263,13 @@ export const StudentHomework = () => {
                     <p className="text-sm text-muted-foreground mb-2">{hw.description}</p>
                     {submission && (
                       <div className="mt-4 p-3 bg-muted rounded-lg">
-                        <p className="text-sm font-medium mb-1">Your Submission:</p>
-                        <p className="text-sm text-muted-foreground">{submission.submission_text}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Submitted on: {submission.submitted_date}
-                        </p>
+                        <p className="text-sm font-medium mb-1">Submission Status:</p>
+                        <p className="text-sm text-muted-foreground">{submission.status}</p>
+                        {submission.submitted_date && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Submitted on: {submission.submitted_date}
+                          </p>
+                        )}
                       </div>
                     )}
                   </CardContent>

@@ -4,9 +4,11 @@
       "id": "HW001",
       "title": "Chapter 5: Quadratic Equations",
       "subject": "Mathematics",
+      "class": "10th",
       "description": "Solve exercises 5.1 to 5.3 from textbook",
       "assigned_date": "2024-02-01",
       "due_date": "2024-02-05",
+      "status": "Active",
       "assigned_to": ["S001"],
       "submissions": [
         {
@@ -21,9 +23,11 @@
       "id": "HW002",
       "title": "Light and Reflection",
       "subject": "Physics",
+      "class": "10th",
       "description": "Complete numerical problems from chapter 10",
       "assigned_date": "2024-02-02",
       "due_date": "2024-02-06",
+      "status": "Active",
       "assigned_to": ["S001"],
       "submissions": [
         {
@@ -39,9 +43,11 @@
       "id": "HW003",
       "title": "Integration Practice",
       "subject": "Mathematics",
+      "class": "12th",
       "description": "Solve integration problems from chapter 7",
       "assigned_date": "2024-02-01",
       "due_date": "2024-02-04",
+      "status": "Active",
       "assigned_to": ["S002"],
       "submissions": [
         {

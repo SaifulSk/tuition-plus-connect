@@ -44,7 +44,7 @@ export const ParentReports = () => {
     ).length;
     
     const acknowledgedCount = childHomework.filter(hw => 
-      hw.submissions?.some(s => s.student_id === childId && s.parent_acknowledged)
+      hw.submissions?.some(s => s.student_id === childId && s.parent_acknowledgment)
     ).length;
 
     return {
@@ -218,7 +218,7 @@ export const ParentReports = () => {
                           .map((hw) => {
                             const submission = hw.submissions?.find(s => s.student_id === selectedChild);
                             const isSubmitted = !!submission;
-                            const isAcknowledged = submission?.parent_acknowledged || false;
+                            const isAcknowledged = submission?.parent_acknowledgment || false;
 
                             return (
                               <div key={hw.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -227,11 +227,11 @@ export const ParentReports = () => {
                                   <p className="text-sm text-muted-foreground">
                                     {hw.subject} • Due: {hw.due_date}
                                   </p>
-                                  {submission && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Submitted: {submission.submitted_date}
-                                    </p>
-                                  )}
+                                   {submission && (submission as any).submitted_date && (
+                                     <p className="text-xs text-muted-foreground mt-1">
+                                       Submitted: {(submission as any).submitted_date}
+                                     </p>
+                                   )}
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <Badge variant={isSubmitted ? 'default' : 'destructive'}>

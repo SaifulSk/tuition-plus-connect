@@ -5,6 +5,7 @@
       "name": "Priya Sharma",
       "class": "10th",
       "subjects": ["Mathematics", "Physics", "Chemistry"],
+      "parent_id": "P001",
       "fee_structure": {
         "monthly_fee": 3000,
         "subjects": {
@@ -25,6 +26,7 @@
       "name": "Arjun Singh",
       "class": "12th",
       "subjects": ["Mathematics", "Physics"],
+      "parent_id": "P002",
       "fee_structure": {
         "monthly_fee": 2500,
         "subjects": {
