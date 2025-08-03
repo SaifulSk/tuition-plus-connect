@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { GraduationCap, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginPageProps {
   userType: "teacher" | "student" | "parent";
@@ -14,11 +16,13 @@ interface LoginPageProps {
 
 export const LoginPage = ({ userType }: LoginPageProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [credentials, setCredentials] = useState({
-    username: "",
+    email: "",
     password: ""
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const getUserTypeConfig = () => {
     switch (userType) {
@@ -26,21 +30,21 @@ export const LoginPage = ({ userType }: LoginPageProps) => {
         return {
           title: "Teacher Login",
           description: "Access your teaching dashboard and manage your students",
-          placeholder: "Enter teacher ID or email",
+          placeholder: "Enter your email",
           dashboardRoute: "/teacher-dashboard"
         };
       case "student":
         return {
           title: "Student Login", 
           description: "Access your homework, tests, and progress reports",
-          placeholder: "Enter student ID or email",
+          placeholder: "Enter your email",
           dashboardRoute: "/student-dashboard"
         };
       case "parent":
         return {
           title: "Parent Login",
           description: "Monitor your child's academic progress and activities",
-          placeholder: "Enter parent ID or email", 
+          placeholder: "Enter your email", 
           dashboardRoute: "/parent-dashboard"
         };
     }
@@ -48,15 +52,40 @@ export const LoginPage = ({ userType }: LoginPageProps) => {
 
   const config = getUserTypeConfig();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, we'll simulate a successful login
-    // Later we'll implement actual authentication with JSON files
-    if (credentials.username && credentials.password) {
-      // Store login info in localStorage for now
-      localStorage.setItem('userType', userType);
-      localStorage.setItem('username', credentials.username);
-      navigate(config.dashboardRoute);
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (error) {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Login Successful",
+          description: `Welcome back!`,
+        });
+        navigate(config.dashboardRoute);
+      }
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -83,13 +112,13 @@ export const LoginPage = ({ userType }: LoginPageProps) => {
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="username"
-                      type="text"
+                      id="email"
+                      type="email"
                       placeholder={config.placeholder}
-                      value={credentials.username}
-                      onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+                      value={credentials.email}
+                      onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
                       required
                     />
                   </div>
@@ -121,8 +150,8 @@ export const LoginPage = ({ userType }: LoginPageProps) => {
                     </div>
                   </div>
                   
-                  <Button type="submit" variant="gradient" className="w-full" size="lg">
-                    Login
+                  <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isLoading}>
+                    {isLoading ? "Signing in..." : "Login"}
                   </Button>
                 </form>
                 

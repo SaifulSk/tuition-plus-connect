@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { StudentManagement } from "@/components/StudentManagement";
 import { FeeManagement } from "@/components/FeeManagement";
 import { HomeworkManagement } from "@/components/HomeworkManagement";
@@ -22,23 +24,48 @@ export const TeacherDashboard = () => {
   const [username, setUsername] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    const userType = localStorage.getItem('userType');
-    
-    if (!storedUsername || userType !== 'teacher') {
-      navigate('/');
-      return;
-    }
-    
-    setUsername(storedUsername);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/teacher-login');
+        return;
+      }
+      
+      setUsername(session.user.email || "Teacher");
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/teacher-login');
+      } else if (session) {
+        setUsername(session.user.email || "Teacher");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('userType');
-    localStorage.removeItem('username');
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const dashboardCards = [
