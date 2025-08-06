@@ -14,50 +14,98 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Users, Plus, Edit, Calendar, DollarSign } from "lucide-react";
-import studentsData from "@/data/students.json";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Student {
   id: string;
   name: string;
+  email: string;
+  phone?: string;
   class: string;
   subjects: string[];
-  fee_structure: {
-    monthly_fee: number;
-    subjects: Record<string, number>;
-  };
-  schedule: Record<string, string[]>;
+  created_at: string;
+  updated_at: string;
 }
 
 export const StudentManagement = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [newStudent, setNewStudent] = useState({
     name: "",
+    email: "",
+    phone: "",
     class: "",
-    subjects: "",
-    monthly_fee: ""
+    subjects: ""
   });
+  const { toast } = useToast();
 
   useEffect(() => {
-    setStudents(studentsData.students);
+    fetchStudents();
   }, []);
 
-  const handleAddStudent = () => {
-    const student: Student = {
-      id: `S${String(students.length + 1).padStart(3, '0')}`,
-      name: newStudent.name,
-      class: newStudent.class,
-      subjects: newStudent.subjects.split(',').map(s => s.trim()),
-      fee_structure: {
-        monthly_fee: parseInt(newStudent.monthly_fee),
-        subjects: {}
-      },
-      schedule: {}
-    };
-    
-    setStudents([...students, student]);
-    setNewStudent({ name: "", class: "", subjects: "", monthly_fee: "" });
-    setIsAddDialogOpen(false);
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch students",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddStudent = async () => {
+    if (!newStudent.name || !newStudent.email || !newStudent.class) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .insert([{
+          name: newStudent.name,
+          email: newStudent.email,
+          phone: newStudent.phone || null,
+          class: newStudent.class,
+          subjects: newStudent.subjects.split(',').map(s => s.trim()),
+          user_id: crypto.randomUUID() // Temporary - in real app, this would be from auth
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setStudents([data, ...students]);
+      setNewStudent({ name: "", email: "", phone: "", class: "", subjects: "" });
+      setIsAddDialogOpen(false);
+      
+      toast({
+        title: "Success",
+        description: "Student added successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add student",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -80,43 +128,56 @@ export const StudentManagement = () => {
               <DialogDescription>Enter student details to add them to your coaching</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
-              <div>
-                <Label htmlFor="name">Student Name</Label>
-                <Input
-                  id="name"
-                  value={newStudent.name}
-                  onChange={(e) => setNewStudent({...newStudent, name: e.target.value})}
-                  placeholder="Enter student name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="class">Class</Label>
-                <Input
-                  id="class"
-                  value={newStudent.class}
-                  onChange={(e) => setNewStudent({...newStudent, class: e.target.value})}
-                  placeholder="e.g., 10th, 12th"
-                />
-              </div>
-              <div>
-                <Label htmlFor="subjects">Subjects (comma separated)</Label>
-                <Input
-                  id="subjects"
-                  value={newStudent.subjects}
-                  onChange={(e) => setNewStudent({...newStudent, subjects: e.target.value})}
-                  placeholder="Mathematics, Physics, Chemistry"
-                />
-              </div>
-              <div>
-                <Label htmlFor="fee">Monthly Fee (₹)</Label>
-                <Input
-                  id="fee"
-                  type="number"
-                  value={newStudent.monthly_fee}
-                  onChange={(e) => setNewStudent({...newStudent, monthly_fee: e.target.value})}
-                  placeholder="3000"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="name">Student Name</Label>
+                  <Input
+                    id="name"
+                    value={newStudent.name}
+                    onChange={(e) => setNewStudent({...newStudent, name: e.target.value})}
+                    placeholder="Enter student name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newStudent.email}
+                    onChange={(e) => setNewStudent({...newStudent, email: e.target.value})}
+                    placeholder="student@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={newStudent.phone}
+                    onChange={(e) => setNewStudent({...newStudent, phone: e.target.value})}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="class">Class</Label>
+                  <Input
+                    id="class"
+                    value={newStudent.class}
+                    onChange={(e) => setNewStudent({...newStudent, class: e.target.value})}
+                    placeholder="e.g., 10th, 12th"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="subjects">Subjects (comma separated)</Label>
+                  <Input
+                    id="subjects"
+                    value={newStudent.subjects}
+                    onChange={(e) => setNewStudent({...newStudent, subjects: e.target.value})}
+                    placeholder="Mathematics, Physics, Chemistry"
+                  />
+                </div>
               <Button onClick={handleAddStudent} className="w-full bg-gradient-primary">
                 Add Student
               </Button>
@@ -133,54 +194,57 @@ export const StudentManagement = () => {
         </TabsList>
         
         <TabsContent value="all" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {students.map((student) => (
-              <Card key={student.id} className="shadow-elegant hover:shadow-glow transition-all">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{student.name}</CardTitle>
-                    <Badge variant="secondary">{student.class}</Badge>
-                  </div>
-                  <CardDescription>Student ID: {student.id}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Subjects</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {student.subjects.map((subject, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {subject}
-                        </Badge>
-                      ))}
+          {isLoading ? (
+            <div className="text-center py-8">Loading students...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {students.map((student) => (
+                <Card key={student.id} className="shadow-elegant hover:shadow-glow transition-all">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{student.name}</CardTitle>
+                      <Badge variant="secondary">{student.class}</Badge>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center">
-                      <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span>₹{student.fee_structure.monthly_fee}/month</span>
+                    <CardDescription>Email: {student.email}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Subjects</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {student.subjects.map((subject, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {subject}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    <span>{Object.keys(student.schedule).length} days/week</span>
-                  </div>
-                  
-                  <div className="flex space-x-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      Schedule
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    
+                    {student.phone && (
+                      <div className="text-sm text-muted-foreground">
+                        Phone: {student.phone}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>Joined: {new Date(student.created_at).toLocaleDateString()}</span>
+                    </div>
+                    
+                    <div className="flex space-x-2 pt-2">
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Schedule
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="10th">
@@ -192,7 +256,8 @@ export const StudentManagement = () => {
                   <CardDescription>{student.subjects.join(", ")}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Monthly Fee: ₹{student.fee_structure.monthly_fee}</p>
+                  <p>Email: {student.email}</p>
+                  {student.phone && <p>Phone: {student.phone}</p>}
                 </CardContent>
               </Card>
             ))}
@@ -208,7 +273,8 @@ export const StudentManagement = () => {
                   <CardDescription>{student.subjects.join(", ")}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Monthly Fee: ₹{student.fee_structure.monthly_fee}</p>
+                  <p>Email: {student.email}</p>
+                  {student.phone && <p>Phone: {student.phone}</p>}
                 </CardContent>
               </Card>
             ))}

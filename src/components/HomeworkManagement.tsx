@@ -30,8 +30,8 @@ import {
   AlertCircle,
   User
 } from "lucide-react";
-import homeworkData from "@/data/homework.json";
-import studentsData from "@/data/students.json";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Homework {
   id: string;
@@ -40,20 +40,28 @@ interface Homework {
   description: string;
   assigned_date: string;
   due_date: string;
-  assigned_to: string[];
-  submissions: {
-    student_id: string;
-    student_name: string;
-    status: "Completed" | "Pending" | "Late";
-    submitted_date?: string;
-    parent_acknowledgment: boolean;
-  }[];
+  assigned_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface HomeworkSubmission {
+  id: string;
+  homework_id: string;
+  student_id: string;
+  status: "pending" | "completed" | "late";
+  submitted_date?: string;
+  parent_acknowledged: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const HomeworkManagement = () => {
   const [homework, setHomework] = useState<Homework[]>([]);
+  const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [newHomework, setNewHomework] = useState({
     title: "",
     subject: "",
@@ -61,44 +69,128 @@ export const HomeworkManagement = () => {
     due_date: "",
     assigned_to: [] as string[]
   });
+  const { toast } = useToast();
 
   useEffect(() => {
-    setHomework(homeworkData.homework as Homework[]);
-    setStudents(studentsData.students);
+    fetchHomework();
+    fetchStudents();
+    fetchSubmissions();
   }, []);
 
-  const handleAddHomework = () => {
-    const hw: Homework = {
-      id: `HW${String(homework.length + 1).padStart(3, '0')}`,
-      title: newHomework.title,
-      subject: newHomework.subject,
-      description: newHomework.description,
-      assigned_date: new Date().toISOString().split('T')[0],
-      due_date: newHomework.due_date,
-      assigned_to: newHomework.assigned_to,
-      submissions: newHomework.assigned_to.map(studentId => {
-        const student = students.find(s => s.id === studentId);
-        return {
-          student_id: studentId,
-          student_name: student?.name || "",
-          status: "Pending" as const,
-          parent_acknowledgment: false
-        };
-      })
-    };
-    
-    setHomework([...homework, hw]);
-    setNewHomework({ title: "", subject: "", description: "", due_date: "", assigned_to: [] });
-    setIsAddDialogOpen(false);
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('id, name');
+      
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    }
+  };
+
+  const fetchHomework = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('homework')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setHomework(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch homework",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchSubmissions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('homework_submissions')
+        .select('*');
+
+      if (error) throw error;
+      setSubmissions((data || []).map(sub => ({
+        ...sub,
+        status: sub.status as "pending" | "completed" | "late"
+      })));
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+    }
+  };
+
+  const handleAddHomework = async () => {
+    if (!newHomework.title || !newHomework.subject || !newHomework.due_date) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('homework')
+        .insert([{
+          title: newHomework.title,
+          subject: newHomework.subject,
+          description: newHomework.description,
+          due_date: newHomework.due_date,
+          assigned_by: crypto.randomUUID() // In real app, this would be from auth
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create submissions for selected students
+      if (newHomework.assigned_to.length > 0) {
+        const submissionPromises = newHomework.assigned_to.map(studentId => 
+          supabase
+            .from('homework_submissions')
+            .insert([{
+              homework_id: data.id,
+              student_id: studentId,
+              status: 'pending'
+            }])
+        );
+
+        await Promise.all(submissionPromises);
+      }
+
+      setHomework([data, ...homework]);
+      setNewHomework({ title: "", subject: "", description: "", due_date: "", assigned_to: [] });
+      setIsAddDialogOpen(false);
+      fetchSubmissions(); // Refresh submissions
+      
+      toast({
+        title: "Success",
+        description: "Homework assigned successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to assign homework",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Completed":
+      case "completed":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "Pending":
+      case "pending":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "Late":
+      case "late":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
         return null;
@@ -107,11 +199,11 @@ export const HomeworkManagement = () => {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case "Completed":
+      case "completed":
         return "default";
-      case "Pending":
+      case "pending":
         return "secondary";
-      case "Late":
+      case "late":
         return "destructive";
       default:
         return "outline";
@@ -119,15 +211,9 @@ export const HomeworkManagement = () => {
   };
 
   const totalHomework = homework.length;
-  const pendingSubmissions = homework.reduce((sum, hw) => 
-    sum + hw.submissions.filter(s => s.status === "Pending").length, 0
-  );
-  const completedSubmissions = homework.reduce((sum, hw) => 
-    sum + hw.submissions.filter(s => s.status === "Completed").length, 0
-  );
-  const lateSubmissions = homework.reduce((sum, hw) => 
-    sum + hw.submissions.filter(s => s.status === "Late").length, 0
-  );
+  const pendingSubmissions = submissions.filter(s => s.status === "pending").length;
+  const completedSubmissions = submissions.filter(s => s.status === "completed").length;
+  const lateSubmissions = submissions.filter(s => s.status === "late").length;
 
   return (
     <div className="space-y-6">
@@ -290,59 +376,73 @@ export const HomeworkManagement = () => {
         </TabsList>
         
         <TabsContent value="all" className="space-y-4">
-          {homework.map((hw) => (
-            <Card key={hw.id} className="shadow-elegant">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{hw.title}</CardTitle>
-                    <CardDescription>{hw.subject} • Due: {hw.due_date}</CardDescription>
-                  </div>
-                  <Badge variant="outline">{hw.id}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{hw.description}</p>
-                
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Submissions ({hw.submissions.length})</h4>
-                  <div className="space-y-2">
-                    {hw.submissions.map((submission, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">{submission.student_name}</span>
-                          <div className="flex items-center space-x-1">
-                            {getStatusIcon(submission.status)}
-                            <Badge variant={getStatusVariant(submission.status)} className="text-xs">
-                              {submission.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {submission.parent_acknowledgment && (
-                            <Badge variant="outline" className="text-xs">
-                              Parent Ack ✓
-                            </Badge>
-                          )}
-                          {submission.submitted_date && (
-                            <span className="text-xs text-muted-foreground">
-                              {submission.submitted_date}
-                            </span>
-                          )}
-                        </div>
+          {isLoading ? (
+            <div className="text-center py-8">Loading homework...</div>
+          ) : (
+            homework.map((hw) => {
+              const hwSubmissions = submissions.filter(s => s.homework_id === hw.id);
+              
+              return (
+                <Card key={hw.id} className="shadow-elegant">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{hw.title}</CardTitle>
+                        <CardDescription>{hw.subject} • Due: {hw.due_date}</CardDescription>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                      <Badge variant="outline">
+                        {new Date(hw.assigned_date).toLocaleDateString()}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">{hw.description}</p>
+                    
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Submissions ({hwSubmissions.length})</h4>
+                      <div className="space-y-2">
+                        {hwSubmissions.map((submission) => {
+                          const student = students.find(s => s.id === submission.student_id);
+                          
+                          return (
+                            <div key={submission.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium">{student?.name || 'Unknown Student'}</span>
+                                <div className="flex items-center space-x-1">
+                                  {getStatusIcon(submission.status)}
+                                  <Badge variant={getStatusVariant(submission.status)} className="text-xs">
+                                    {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {submission.parent_acknowledged && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Parent Ack ✓
+                                  </Badge>
+                                )}
+                                {submission.submitted_date && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(submission.submitted_date).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </TabsContent>
         
         <TabsContent value="pending">
           <div className="space-y-4">
-            {homework.filter(hw => hw.submissions.some(s => s.status === "Pending")).map((hw) => (
+            {homework.filter(hw => submissions.some(s => s.homework_id === hw.id && s.status === "pending")).map((hw) => (
               <Card key={hw.id} className="shadow-elegant">
                 <CardHeader>
                   <CardTitle>{hw.title}</CardTitle>
@@ -350,12 +450,15 @@ export const HomeworkManagement = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {hw.submissions.filter(s => s.status === "Pending").map((submission, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
-                        <span className="font-medium">{submission.student_name}</span>
-                        <Badge variant="secondary">Pending</Badge>
-                      </div>
-                    ))}
+                    {submissions.filter(s => s.homework_id === hw.id && s.status === "pending").map((submission) => {
+                      const student = students.find(s => s.id === submission.student_id);
+                      return (
+                        <div key={submission.id} className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
+                          <span className="font-medium">{student?.name || 'Unknown Student'}</span>
+                          <Badge variant="secondary">Pending</Badge>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -365,7 +468,7 @@ export const HomeworkManagement = () => {
         
         <TabsContent value="completed">
           <div className="space-y-4">
-            {homework.filter(hw => hw.submissions.some(s => s.status === "Completed")).map((hw) => (
+            {homework.filter(hw => submissions.some(s => s.homework_id === hw.id && s.status === "completed")).map((hw) => (
               <Card key={hw.id} className="shadow-elegant">
                 <CardHeader>
                   <CardTitle>{hw.title}</CardTitle>
@@ -373,19 +476,22 @@ export const HomeworkManagement = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {hw.submissions.filter(s => s.status === "Completed").map((submission, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-                        <span className="font-medium">{submission.student_name}</span>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="default">Completed</Badge>
-                          {submission.submitted_date && (
-                            <span className="text-xs text-muted-foreground">
-                              {submission.submitted_date}
-                            </span>
-                          )}
+                    {submissions.filter(s => s.homework_id === hw.id && s.status === "completed").map((submission) => {
+                      const student = students.find(s => s.id === submission.student_id);
+                      return (
+                        <div key={submission.id} className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                          <span className="font-medium">{student?.name || 'Unknown Student'}</span>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="default">Completed</Badge>
+                            {submission.submitted_date && (
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(submission.submitted_date).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>

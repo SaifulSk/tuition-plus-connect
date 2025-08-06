@@ -9,81 +9,125 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, Clock, Users, FileText, Trophy, Target } from "lucide-react";
-import testsData from "@/data/tests.json";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Test {
   id: string;
   title: string;
   subject: string;
-  class: string;
-  type: string;
-  date: string;
-  duration: string;
-  total_marks: number;
+  test_date: string;
+  max_marks: number;
   created_by: string;
-  students_assigned: string[];
-  questions: Question[];
-}
-
-interface Question {
-  id: number;
-  question: string;
-  type: string;
-  marks: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface TestResult {
+  id: string;
   test_id: string;
   student_id: string;
-  student_name: string;
   marks_obtained: number;
-  total_marks: number;
-  percentage: number;
-  grade: string;
-  attempt_date: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const TestManagement = () => {
   const [tests, setTests] = useState<Test[]>([]);
   const [results, setResults] = useState<TestResult[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all-tests");
   const [newTest, setNewTest] = useState({
     title: "",
     subject: "",
-    class: "",
-    type: "",
-    date: "",
-    duration: "",
-    total_marks: 0
+    test_date: "",
+    max_marks: 0
   });
+  const { toast } = useToast();
 
   useEffect(() => {
-    setTests(testsData.tests);
-    setResults(testsData.test_results);
+    fetchTests();
+    fetchResults();
   }, []);
 
-  const handleCreateTest = () => {
-    if (newTest.title && newTest.subject && newTest.class) {
-      const test: Test = {
-        id: `TEST${String(tests.length + 1).padStart(3, '0')}`,
-        ...newTest,
-        created_by: "T001",
-        students_assigned: [],
-        questions: []
-      };
-      
-      setTests([...tests, test]);
+  const fetchTests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTests(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch tests",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchResults = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('test_results')
+        .select('*');
+
+      if (error) throw error;
+      setResults(data || []);
+    } catch (error) {
+      console.error('Error fetching test results:', error);
+    }
+  };
+
+  const handleCreateTest = async () => {
+    if (!newTest.title || !newTest.subject || !newTest.test_date) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('tests')
+        .insert([{
+          title: newTest.title,
+          subject: newTest.subject,
+          test_date: newTest.test_date,
+          max_marks: newTest.max_marks,
+          created_by: crypto.randomUUID() // In real app, this would be from auth
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTests([data, ...tests]);
       setNewTest({
         title: "",
         subject: "",
-        class: "",
-        type: "",
-        date: "",
-        duration: "",
-        total_marks: 0
+        test_date: "",
+        max_marks: 0
       });
       setIsCreateDialogOpen(false);
+      
+      toast({
+        title: "Success",
+        description: "Test created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create test",
+        variant: "destructive",
+      });
     }
   };
 
@@ -91,7 +135,7 @@ export const TestManagement = () => {
     return {
       totalTests: tests.length,
       completedTests: results.length,
-      averageScore: results.length > 0 ? Math.round(results.reduce((sum, result) => sum + result.percentage, 0) / results.length) : 0,
+      averageScore: results.length > 0 ? Math.round(results.reduce((sum, result) => sum + (result.marks_obtained / tests.find(t => t.id === result.test_id)?.max_marks || 1) * 100, 0) / results.length) : 0,
       pendingTests: tests.length - results.length
     };
   };
@@ -128,80 +172,41 @@ export const TestManagement = () => {
                   placeholder="e.g., Mathematics Unit Test"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Select value={newTest.subject} onValueChange={(value) => setNewTest({...newTest, subject: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Mathematics">Mathematics</SelectItem>
-                      <SelectItem value="Physics">Physics</SelectItem>
-                      <SelectItem value="Chemistry">Chemistry</SelectItem>
-                      <SelectItem value="Biology">Biology</SelectItem>
-                      <SelectItem value="English">English</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="class">Class</Label>
-                  <Select value={newTest.class} onValueChange={(value) => setNewTest({...newTest, class: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10th">10th</SelectItem>
-                      <SelectItem value="12th">12th</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Select value={newTest.subject} onValueChange={(value) => setNewTest({...newTest, subject: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mathematics">Mathematics</SelectItem>
+                    <SelectItem value="Physics">Physics</SelectItem>
+                    <SelectItem value="Chemistry">Chemistry</SelectItem>
+                    <SelectItem value="Biology">Biology</SelectItem>
+                    <SelectItem value="English">English</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="test-type">Test Type</Label>
-                  <Select value={newTest.type} onValueChange={(value) => setNewTest({...newTest, type: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Chapter-wise">Chapter-wise</SelectItem>
-                      <SelectItem value="Unit Test">Unit Test</SelectItem>
-                      <SelectItem value="Mock Exam">Mock Exam</SelectItem>
-                      <SelectItem value="Practice Test">Practice Test</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="total-marks">Total Marks</Label>
-                  <Input
-                    id="total-marks"
-                    type="number"
-                    value={newTest.total_marks}
-                    onChange={(e) => setNewTest({...newTest, total_marks: parseInt(e.target.value) || 0})}
-                    placeholder="100"
-                  />
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="total-marks">Maximum Marks</Label>
+                <Input
+                  id="total-marks"
+                  type="number"
+                  value={newTest.max_marks}
+                  onChange={(e) => setNewTest({...newTest, max_marks: parseInt(e.target.value) || 0})}
+                  placeholder="100"
+                  required
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="test-date">Test Date</Label>
-                  <Input
-                    id="test-date"
-                    type="date"
-                    value={newTest.date}
-                    onChange={(e) => setNewTest({...newTest, date: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="duration">Duration</Label>
-                  <Input
-                    id="duration"
-                    value={newTest.duration}
-                    onChange={(e) => setNewTest({...newTest, duration: e.target.value})}
-                    placeholder="e.g., 2 hours"
-                  />
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="test-date">Test Date</Label>
+                <Input
+                  id="test-date"
+                  type="date"
+                  value={newTest.test_date}
+                  onChange={(e) => setNewTest({...newTest, test_date: e.target.value})}
+                  required
+                />
               </div>
             </div>
             <DialogFooter>
@@ -269,61 +274,65 @@ export const TestManagement = () => {
         </TabsList>
 
         <TabsContent value="all-tests">
-          <div className="grid gap-4">
-            {tests.map((test) => (
-              <Card key={test.id} className="shadow-elegant hover:shadow-glow transition-all">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{test.title}</CardTitle>
-                      <CardDescription>
-                        {test.subject} • {test.class} • {test.type}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">{test.total_marks} marks</Badge>
-                      <Badge variant="outline">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {test.date}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {test.duration}
+          {isLoading ? (
+            <div className="text-center py-8">Loading tests...</div>
+          ) : (
+            <div className="grid gap-4">
+              {tests.map((test) => (
+                <Card key={test.id} className="shadow-elegant hover:shadow-glow transition-all">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{test.title}</CardTitle>
+                        <CardDescription>
+                          {test.subject} • {new Date(test.test_date).toLocaleDateString()}
+                        </CardDescription>
                       </div>
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-1" />
-                        {test.students_assigned.length} students
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary">{test.max_marks} marks</Badge>
+                        <Badge variant="outline">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {new Date(test.test_date).toLocaleDateString()}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">Edit</Button>
-                      <Button variant="outline" size="sm">View Results</Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          Created: {new Date(test.created_at).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-1" />
+                          {results.filter(r => r.test_id === test.id).length} attempts
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm">Edit</Button>
+                        <Button variant="outline" size="sm">View Results</Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="upcoming">
           <div className="grid gap-4">
-            {tests.filter(test => new Date(test.date) > new Date()).map((test) => (
+            {tests.filter(test => new Date(test.test_date) > new Date()).map((test) => (
               <Card key={test.id} className="shadow-elegant">
                 <CardHeader>
                   <CardTitle className="text-lg">{test.title}</CardTitle>
-                  <CardDescription>{test.subject} • {test.class}</CardDescription>
+                  <CardDescription>{test.subject}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      Scheduled for {test.date} • Duration: {test.duration}
+                      Scheduled for {new Date(test.test_date).toLocaleDateString()} • Max marks: {test.max_marks}
                     </div>
                     <Button variant="outline" size="sm">Reschedule</Button>
                   </div>
@@ -335,31 +344,37 @@ export const TestManagement = () => {
 
         <TabsContent value="results">
           <div className="grid gap-4">
-            {results.map((result, index) => (
-              <Card key={index} className="shadow-elegant">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{result.student_name}</CardTitle>
-                      <CardDescription>
-                        Test ID: {result.test_id} • Attempted on {result.attempt_date}
-                      </CardDescription>
+            {results.map((result) => {
+              const test = tests.find(t => t.id === result.test_id);
+              const percentage = test ? Math.round((result.marks_obtained / test.max_marks) * 100) : 0;
+              const grade = percentage >= 90 ? 'A+' : percentage >= 80 ? 'A' : percentage >= 70 ? 'B+' : percentage >= 60 ? 'B' : 'C';
+              
+              return (
+                <Card key={result.id} className="shadow-elegant">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{test?.title || 'Unknown Test'}</CardTitle>
+                        <CardDescription>
+                          Test ID: {result.test_id} • Attempted on {new Date(result.created_at).toLocaleDateString()}
+                        </CardDescription>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{percentage}%</div>
+                        <Badge variant={grade.startsWith('A') ? 'default' : grade.startsWith('B') ? 'secondary' : 'destructive'}>
+                          Grade {grade}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">{result.percentage}%</div>
-                      <Badge variant={result.grade === 'A' ? 'default' : result.grade === 'B' ? 'secondary' : 'destructive'}>
-                        Grade {result.grade}
-                      </Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-muted-foreground">
+                      Score: {result.marks_obtained}/{test?.max_marks || 0} marks
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground">
-                    Score: {result.marks_obtained}/{result.total_marks} marks
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
       </Tabs>
