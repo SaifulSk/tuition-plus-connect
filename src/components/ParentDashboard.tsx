@@ -32,16 +32,30 @@ export const ParentDashboard = () => {
         return;
       }
       
-      setUsername(session.user.email || "Parent");
+      // Fetch user profile to get the actual name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      setUsername(profile?.name || session.user.email || "Parent");
     };
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         navigate('/parent-login');
       } else if (session) {
-        setUsername(session.user.email || "Parent");
+        // Fetch user profile when session changes
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        setUsername(profile?.name || session.user.email || "Parent");
       }
     });
 
