@@ -14,6 +14,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Select,
   SelectContent,
@@ -28,7 +39,8 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  User
+  User,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -179,6 +191,40 @@ export const HomeworkManagement = () => {
       toast({
         title: "Error",
         description: "Failed to assign homework",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteHomework = async (homeworkId: string) => {
+    try {
+      // First delete associated submissions
+      const { error: submissionsError } = await supabase
+        .from('homework_submissions')
+        .delete()
+        .eq('homework_id', homeworkId);
+
+      if (submissionsError) throw submissionsError;
+
+      // Then delete the homework
+      const { error: homeworkError } = await supabase
+        .from('homework')
+        .delete()
+        .eq('id', homeworkId);
+
+      if (homeworkError) throw homeworkError;
+
+      setHomework(homework.filter(h => h.id !== homeworkId));
+      setSubmissions(submissions.filter(s => s.homework_id !== homeworkId));
+      
+      toast({
+        title: "Success",
+        description: "Homework deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete homework",
         variant: "destructive",
       });
     }
@@ -390,9 +436,35 @@ export const HomeworkManagement = () => {
                         <CardTitle className="text-lg">{hw.title}</CardTitle>
                         <CardDescription>{hw.subject} • Due: {hw.due_date}</CardDescription>
                       </div>
-                      <Badge variant="outline">
-                        {new Date(hw.assigned_date).toLocaleDateString()}
-                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">
+                          {new Date(hw.assigned_date).toLocaleDateString()}
+                        </Badge>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Homework</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{hw.title}"? This will also delete all related submissions and cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteHomework(hw.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">

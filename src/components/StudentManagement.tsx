@@ -13,7 +13,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Users, Plus, Edit, Calendar, DollarSign } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Users, Plus, Edit, Calendar, DollarSign, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -103,6 +114,30 @@ export const StudentManagement = () => {
       toast({
         title: "Error",
         description: "Failed to add student",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteStudent = async (studentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', studentId);
+
+      if (error) throw error;
+
+      setStudents(students.filter(s => s.id !== studentId));
+      
+      toast({
+        title: "Success",
+        description: "Student deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete student",
         variant: "destructive",
       });
     }
@@ -235,10 +270,31 @@ export const StudentManagement = () => {
                         <Edit className="h-3 w-3 mr-1" />
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Schedule
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="flex-1 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Student</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete {student.name}? This action cannot be undone and will remove all associated homework submissions and test results.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteStudent(student.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>

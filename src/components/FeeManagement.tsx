@@ -17,8 +17,20 @@ import {
   Clock, 
   AlertCircle,
   Download,
-  Send
+  Send,
+  Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -136,6 +148,30 @@ export const FeeManagement = () => {
       toast({
         title: "Error",
         description: "Failed to update payment status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFeeRecord = async (recordId: string) => {
+    try {
+      const { error } = await supabase
+        .from('fees')
+        .delete()
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      setFeeRecords(feeRecords.filter(r => r.id !== recordId));
+      
+      toast({
+        title: "Success",
+        description: "Fee record deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete fee record",
         variant: "destructive",
       });
     }
@@ -291,15 +327,45 @@ export const FeeManagement = () => {
                         </TableCell>
                         <TableCell>{record.payment_date || "-"}</TableCell>
                         <TableCell>
-                          {record.status === "pending" && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => markAsPaid(record.id)}
-                            >
-                              Mark Paid
-                            </Button>
-                          )}
+                          <div className="flex space-x-2">
+                            {record.status === "pending" && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => markAsPaid(record.id)}
+                              >
+                                Mark Paid
+                              </Button>
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Fee Record</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this fee record for {record.student_name}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteFeeRecord(record.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

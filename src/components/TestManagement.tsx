@@ -6,9 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Clock, Users, FileText, Trophy, Target } from "lucide-react";
+import { Plus, Calendar, Clock, Users, FileText, Trophy, Target, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -126,6 +137,40 @@ export const TestManagement = () => {
       toast({
         title: "Error",
         description: "Failed to create test",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTest = async (testId: string) => {
+    try {
+      // First delete associated test results
+      const { error: resultsError } = await supabase
+        .from('test_results')
+        .delete()
+        .eq('test_id', testId);
+
+      if (resultsError) throw resultsError;
+
+      // Then delete the test
+      const { error: testError } = await supabase
+        .from('tests')
+        .delete()
+        .eq('id', testId);
+
+      if (testError) throw testError;
+
+      setTests(tests.filter(t => t.id !== testId));
+      setResults(results.filter(r => r.test_id !== testId));
+      
+      toast({
+        title: "Success",
+        description: "Test deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete test",
         variant: "destructive",
       });
     }
@@ -312,6 +357,30 @@ export const TestManagement = () => {
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm">Edit</Button>
                         <Button variant="outline" size="sm">View Results</Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Test</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{test.title}"? This will also delete all related test results and cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteTest(test.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </CardContent>
