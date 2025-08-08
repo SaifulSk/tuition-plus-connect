@@ -198,13 +198,13 @@ export const TeacherDashboard = () => {
                       key={index}
                       variant="outline"
                       onClick={action.action}
-                      className="h-auto p-4 flex flex-col items-start space-y-2 hover:bg-muted transition-all"
+                      className="h-auto p-4 flex flex-col items-start space-y-2 hover:bg-muted hover:text-foreground transition-all group"
                     >
                       <div className="flex items-center space-x-2">
                         {action.icon}
-                        <span className="font-medium">{action.title}</span>
+                        <span className="font-medium group-hover:text-foreground">{action.title}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground text-left">
+                      <span className="text-xs text-muted-foreground group-hover:text-muted-foreground text-left">
                         {action.description}
                       </span>
                     </Button>
