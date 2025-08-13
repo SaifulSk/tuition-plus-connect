@@ -9,6 +9,8 @@ import { StudentManagement } from "@/components/StudentManagement";
 import { FeeManagement } from "@/components/FeeManagement";
 import { HomeworkManagement } from "@/components/HomeworkManagement";
 import { TestManagement } from "@/components/TestManagement";
+import { ClassSchedule } from "@/components/ClassSchedule";
+import { SyllabusTracker } from "@/components/SyllabusTracker";
 import { 
   Users, 
   DollarSign, 
@@ -163,19 +165,9 @@ export const TeacherDashboard = () => {
       case "tests":
         return <TestManagement />;
       case "schedule":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Class Schedule</h2>
-            <p className="text-muted-foreground">Schedule management feature coming soon...</p>
-          </div>
-        );
+        return <ClassSchedule />;
       case "syllabus":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Syllabus Tracker</h2>
-            <p className="text-muted-foreground">Syllabus tracking feature coming soon...</p>
-          </div>
-        );
+        return <SyllabusTracker />;
       default:
         return (
           <>
