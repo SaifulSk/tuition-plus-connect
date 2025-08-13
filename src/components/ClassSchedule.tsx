@@ -172,12 +172,19 @@ export const ClassSchedule = () => {
   };
 
   const groupedSchedules = schedules.reduce((acc, schedule) => {
-    if (!acc[schedule.day]) {
-      acc[schedule.day] = [];
+    const timeSlot = `${schedule.start_time} - ${schedule.end_time}`;
+    if (!acc[timeSlot]) {
+      acc[timeSlot] = [];
     }
-    acc[schedule.day].push(schedule);
+    acc[timeSlot].push(schedule);
     return acc;
   }, {} as Record<string, ClassSchedule[]>);
+
+  const timeSlots = Object.keys(groupedSchedules).sort((a, b) => {
+    const timeA = a.split(' - ')[0];
+    const timeB = b.split(' - ')[0];
+    return timeA.localeCompare(timeB);
+  });
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
@@ -289,33 +296,32 @@ export const ClassSchedule = () => {
       </div>
 
       <div className="grid gap-6">
-        {daysOfWeek.map((day) => (
-          <Card key={day} className="shadow-elegant">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                {day}
-              </CardTitle>
-              <CardDescription>
-                {groupedSchedules[day]?.length || 0} classes scheduled
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {groupedSchedules[day]?.length > 0 ? (
-                <div className="space-y-3">
-                  {groupedSchedules[day].map((schedule) => (
-                    <div key={schedule.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">{schedule.subject}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {schedule.class} • {schedule.start_time} - {schedule.end_time}
-                          </div>
+        {timeSlots.length > 0 ? (
+          timeSlots.map((timeSlot) => (
+            <Card key={timeSlot} className="shadow-elegant">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  {timeSlot}
+                </CardTitle>
+                <CardDescription>
+                  {groupedSchedules[timeSlot]?.length || 0} classes in this time slot
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {groupedSchedules[timeSlot].map((schedule) => (
+                    <div key={schedule.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                      <div className="flex-1">
+                        <div className="font-medium text-lg">{schedule.subject}</div>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          {schedule.class}
                         </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {schedule.day}
+                        </Badge>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline">{schedule.class}</Badge>
+                      <div className="flex items-center space-x-1 ml-2">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -334,12 +340,20 @@ export const ClassSchedule = () => {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">No classes scheduled for {day}</p>
-              )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="shadow-elegant">
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Classes Scheduled</h3>
+                <p className="text-muted-foreground">Add your first class to get started</p>
+              </div>
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
 
       <AlertDialog open={deleteScheduleId !== null} onOpenChange={() => setDeleteScheduleId(null)}>
