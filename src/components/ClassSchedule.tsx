@@ -171,20 +171,24 @@ export const ClassSchedule = () => {
     setIsDialogOpen(true);
   };
 
-  const groupedSchedules = schedules.reduce((acc, schedule) => {
-    const timeSlot = `${schedule.start_time} - ${schedule.end_time}`;
-    if (!acc[timeSlot]) {
-      acc[timeSlot] = [];
-    }
-    acc[timeSlot].push(schedule);
-    return acc;
-  }, {} as Record<string, ClassSchedule[]>);
+  // Get unique time slots and sort them
+  const timeSlots = Array.from(new Set(schedules.map(s => `${s.start_time} - ${s.end_time}`)))
+    .sort((a, b) => {
+      const timeA = a.split(' - ')[0];
+      const timeB = b.split(' - ')[0];
+      return timeA.localeCompare(timeB);
+    });
 
-  const timeSlots = Object.keys(groupedSchedules).sort((a, b) => {
-    const timeA = a.split(' - ')[0];
-    const timeB = b.split(' - ')[0];
-    return timeA.localeCompare(timeB);
-  });
+  // Create a matrix of schedules by day and time
+  const scheduleMatrix = daysOfWeek.reduce((acc, day) => {
+    acc[day] = {};
+    timeSlots.forEach(timeSlot => {
+      acc[day][timeSlot] = schedules.find(s => 
+        s.day === day && `${s.start_time} - ${s.end_time}` === timeSlot
+      ) || null;
+    });
+    return acc;
+  }, {} as Record<string, Record<string, ClassSchedule | null>>);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
@@ -295,66 +299,93 @@ export const ClassSchedule = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-6">
-        {timeSlots.length > 0 ? (
-          timeSlots.map((timeSlot) => (
-            <Card key={timeSlot} className="shadow-elegant">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  {timeSlot}
-                </CardTitle>
-                <CardDescription>
-                  {groupedSchedules[timeSlot]?.length || 0} classes in this time slot
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {groupedSchedules[timeSlot].map((schedule) => (
-                    <div key={schedule.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
-                      <div className="flex-1">
-                        <div className="font-medium text-lg">{schedule.subject}</div>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          {schedule.class}
-                        </div>
-                        <Badge variant="secondary" className="text-xs">
-                          {schedule.day}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center space-x-1 ml-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(schedule)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteScheduleId(schedule.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+      {schedules.length > 0 ? (
+        <Card className="shadow-elegant">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Weekly Schedule
+            </CardTitle>
+            <CardDescription>
+              View and manage your class timetable
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border border-border p-3 bg-muted/50 text-left font-medium">Day</th>
+                    {timeSlots.map((timeSlot) => (
+                      <th key={timeSlot} className="border border-border p-3 bg-muted/50 text-center font-medium min-w-[200px]">
+                        {timeSlot}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {daysOfWeek.map((day) => (
+                    <tr key={day}>
+                      <td className="border border-border p-3 bg-muted/20 font-medium">
+                        {day}
+                      </td>
+                      {timeSlots.map((timeSlot) => {
+                        const schedule = scheduleMatrix[day][timeSlot];
+                        return (
+                          <td key={timeSlot} className="border border-border p-2 h-24 align-top">
+                            {schedule ? (
+                              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 h-full flex flex-col justify-between">
+                                <div>
+                                  <div className="font-medium text-sm">{schedule.subject}</div>
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {schedule.class}
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-end space-x-1 mt-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => handleEdit(schedule)}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => setDeleteScheduleId(schedule.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="h-full border-2 border-dashed border-muted rounded-lg flex items-center justify-center opacity-50">
+                                <span className="text-xs text-muted-foreground">No class</span>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card className="shadow-elegant">
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Classes Scheduled</h3>
-                <p className="text-muted-foreground">Add your first class to get started</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="shadow-elegant">
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No Classes Scheduled</h3>
+              <p className="text-muted-foreground">Add your first class to get started</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <AlertDialog open={deleteScheduleId !== null} onOpenChange={() => setDeleteScheduleId(null)}>
         <AlertDialogContent>
