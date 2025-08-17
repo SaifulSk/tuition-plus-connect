@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, CheckCircle, AlertCircle, FileText, Upload } from "lucide-react";
-import homeworkData from "@/data/homework.json";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Homework {
   id: string;
@@ -31,19 +31,38 @@ interface Submission {
 }
 
 export const StudentHomework = () => {
-  const [homework, setHomework] = useState<Homework[]>([]);
+  const [homework, setHomework] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
-  const [selectedHomework, setSelectedHomework] = useState<Homework | null>(null);
+  const [selectedHomework, setSelectedHomework] = useState<any | null>(null);
   const [submissionText, setSubmissionText] = useState("");
-  const currentStudentId = "S001"; // This would come from auth context
+  const currentStudentId = "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c67"; // This would come from auth context
 
   useEffect(() => {
-    // Filter homework assigned to current student
-    const studentHomework = homeworkData.homework.filter(hw => 
-      hw.assigned_to.includes(currentStudentId)
-    );
-    setHomework(studentHomework as Homework[]);
+    fetchHomeworkData();
   }, []);
+
+  const fetchHomeworkData = async () => {
+    try {
+      // Fetch homework
+      const { data: homeworkData } = await supabase
+        .from('homework')
+        .select('*');
+      
+      if (homeworkData) setHomework(homeworkData);
+
+      // Fetch submissions for current student
+      const { data: submissionsData } = await supabase
+        .from('homework_submissions')
+        .select('*')
+        .eq('student_id', currentStudentId);
+      
+      if (submissionsData) setSubmissions(submissionsData);
+
+    } catch (error) {
+      console.error('Error fetching homework data:', error);
+    }
+  };
 
   const handleSubmitHomework = () => {
     if (selectedHomework && submissionText.trim()) {
@@ -72,10 +91,10 @@ export const StudentHomework = () => {
     }
   };
 
-  const getHomeworkStatus = (hw: Homework) => {
-    const submission = hw.submissions?.find(s => s.student_id === currentStudentId);
+  const getHomeworkStatus = (hw: any) => {
+    const submission = submissions.find(s => s.homework_id === hw.id);
     if (submission) {
-      return submission.status;
+      return submission.status === 'completed' ? "Completed" : submission.status;
     }
     const dueDate = new Date(hw.due_date);
     const today = new Date();

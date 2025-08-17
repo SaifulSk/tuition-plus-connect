@@ -6,9 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, TrendingUp, Trophy, BookOpen, Clock, CheckCircle, AlertCircle, Download } from "lucide-react";
-import homeworkData from "@/data/homework.json";
-import testsData from "@/data/tests.json";
-import studentsData from "@/data/students.json";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Student {
   id: string;
@@ -21,42 +19,81 @@ interface Student {
 export const ParentReports = () => {
   const [selectedChild, setSelectedChild] = useState<string>("");
   const [children, setChildren] = useState<Student[]>([]);
-  const currentParentId = "P001"; // This would come from auth context
+  const [homework, setHomework] = useState<any[]>([]);
+  const [homeworkSubmissions, setHomeworkSubmissions] = useState<any[]>([]);
+  const [tests, setTests] = useState<any[]>([]);
+  const [testResults, setTestResults] = useState<any[]>([]);
+  const currentParentId = "fcbd7062-310f-43d2-8ba8-8fcea34edec6"; // This would come from auth context
 
   useEffect(() => {
-    // Filter children for current parent
-    const parentChildren = studentsData.students.filter(student => 
-      student.parent_id === currentParentId
-    );
-    setChildren(parentChildren);
-    if (parentChildren.length > 0) {
-      setSelectedChild(parentChildren[0].id);
-    }
+    fetchData();
   }, []);
 
+  const fetchData = async () => {
+    try {
+      // Fetch children for current parent
+      const { data: studentsData } = await supabase
+        .from('students')
+        .select('*')
+        .eq('parent_id', currentParentId);
+      
+      if (studentsData) {
+        setChildren(studentsData);
+        if (studentsData.length > 0) {
+          setSelectedChild(studentsData[0].id);
+        }
+      }
+
+      // Fetch homework
+      const { data: homeworkData } = await supabase
+        .from('homework')
+        .select('*');
+      
+      if (homeworkData) setHomework(homeworkData);
+
+      // Fetch homework submissions
+      const { data: submissionsData } = await supabase
+        .from('homework_submissions')
+        .select('*');
+      
+      if (submissionsData) setHomeworkSubmissions(submissionsData);
+
+      // Fetch tests
+      const { data: testsData } = await supabase
+        .from('tests')
+        .select('*');
+      
+      if (testsData) setTests(testsData);
+
+      // Fetch test results
+      const { data: resultsData } = await supabase
+        .from('test_results')
+        .select('*');
+      
+      if (resultsData) setTestResults(resultsData);
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
   const getChildHomeworkStats = (childId: string) => {
-    const childHomework = homeworkData.homework.filter(hw => 
-      hw.assigned_to.includes(childId)
-    );
+    // Get submissions for this child
+    const childSubmissions = homeworkSubmissions.filter(s => s.student_id === childId);
     
-    const submittedCount = childHomework.filter(hw => 
-      hw.submissions?.some(s => s.student_id === childId)
-    ).length;
-    
-    const acknowledgedCount = childHomework.filter(hw => 
-      hw.submissions?.some(s => s.student_id === childId && s.parent_acknowledgment)
-    ).length;
+    const submittedCount = childSubmissions.filter(s => s.status === 'completed').length;
+    const acknowledgedCount = childSubmissions.filter(s => s.parent_acknowledged).length;
 
     return {
-      total: childHomework.length,
+      total: childSubmissions.length,
       submitted: submittedCount,
       acknowledged: acknowledgedCount,
-      pending: childHomework.length - submittedCount
+      pending: childSubmissions.length - submittedCount
     };
   };
 
   const getChildTestResults = (childId: string) => {
-    return testsData.test_results.filter(result => result.student_id === childId);
+    return testResults.filter(result => result.student_id === childId);
   };
 
   const getAttendanceData = () => {
@@ -71,12 +108,12 @@ export const ParentReports = () => {
 
   const selectedChildData = children.find(child => child.id === selectedChild);
   const homeworkStats = selectedChild ? getChildHomeworkStats(selectedChild) : null;
-  const testResults = selectedChild ? getChildTestResults(selectedChild) : [];
+  const childTestResults = selectedChild ? getChildTestResults(selectedChild) : [];
   const attendanceData = getAttendanceData();
 
   const getAveragePerformance = () => {
-    if (testResults.length === 0) return 0;
-    return Math.round(testResults.reduce((sum, result) => sum + result.percentage, 0) / testResults.length);
+    if (childTestResults.length === 0) return 0;
+    return Math.round(childTestResults.reduce((sum, result) => sum + (result.marks_obtained / 100 * 100), 0) / childTestResults.length);
   };
 
   return (
@@ -149,7 +186,7 @@ export const ParentReports = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{getAveragePerformance()}%</div>
-                <p className="text-xs text-muted-foreground">{testResults.length} tests taken</p>
+                <p className="text-xs text-muted-foreground">{childTestResults.length} tests taken</p>
                 <Progress value={getAveragePerformance()} className="mt-2" />
               </CardContent>
             </Card>
@@ -213,23 +250,25 @@ export const ParentReports = () => {
                       </div>
 
                       <div className="space-y-3">
-                        {homeworkData.homework
-                          .filter(hw => hw.assigned_to.includes(selectedChild))
-                          .map((hw) => {
-                            const submission = hw.submissions?.find(s => s.student_id === selectedChild);
-                            const isSubmitted = !!submission;
-                            const isAcknowledged = submission?.parent_acknowledgment || false;
+                        {homeworkSubmissions
+                          .filter(submission => submission.student_id === selectedChild)
+                          .map((submission) => {
+                            const hw = homework.find(h => h.id === submission.homework_id);
+                            const isSubmitted = submission.status === 'completed';
+                            const isAcknowledged = submission.parent_acknowledged || false;
+
+                            if (!hw) return null;
 
                             return (
-                              <div key={hw.id} className="flex items-center justify-between p-4 border rounded-lg">
+                              <div key={submission.id} className="flex items-center justify-between p-4 border rounded-lg">
                                 <div className="flex-1">
                                   <h3 className="font-medium">{hw.title}</h3>
                                   <p className="text-sm text-muted-foreground">
                                     {hw.subject} • Due: {hw.due_date}
                                   </p>
-                                   {submission && (submission as any).submitted_date && (
+                                   {submission.submitted_date && (
                                      <p className="text-xs text-muted-foreground mt-1">
-                                       Submitted: {(submission as any).submitted_date}
+                                       Submitted: {new Date(submission.submitted_date).toLocaleDateString()}
                                      </p>
                                    )}
                                 </div>
@@ -265,36 +304,38 @@ export const ParentReports = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {testResults.map((result) => {
-                      const test = testsData.tests.find(t => t.id === result.test_id);
+                    {childTestResults.map((result) => {
+                      const test = tests.find(t => t.id === result.test_id);
+                      const percentage = Math.round((result.marks_obtained / 100) * 100);
+                      const grade = percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : 'D';
                       
                       return (
                         <div key={result.test_id} className="flex items-center justify-between p-4 border rounded-lg">
                           <div className="flex-1">
                             <h3 className="font-medium">{test?.title}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {test?.subject} • {result.attempt_date}
+                              {test?.subject} • {new Date(result.created_at).toLocaleDateString()}
                             </p>
                           </div>
                           <div className="flex items-center space-x-4">
                             <div className="text-right">
-                              <p className="text-lg font-bold">{result.percentage}%</p>
+                              <p className="text-lg font-bold">{percentage}%</p>
                               <p className="text-sm text-muted-foreground">
-                                {result.marks_obtained}/{result.total_marks}
+                                {result.marks_obtained}/{test?.max_marks || 100}
                               </p>
                             </div>
                             <Badge variant={
-                              result.grade === 'A' ? 'default' : 
-                              result.grade === 'B' ? 'secondary' : 'destructive'
+                              grade === 'A' ? 'default' : 
+                              grade === 'B' ? 'secondary' : 'destructive'
                             }>
-                              Grade {result.grade}
+                              Grade {grade}
                             </Badge>
-                            <Progress value={result.percentage} className="w-20" />
+                            <Progress value={percentage} className="w-20" />
                           </div>
                         </div>
                       );
                     })}
-                    {testResults.length === 0 && (
+                    {childTestResults.length === 0 && (
                       <div className="text-center py-8">
                         <Trophy className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                         <h3 className="text-lg font-medium mb-2">No test results available</h3>

@@ -5,53 +5,56 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Clock, Trophy, Target, BookOpen, TrendingUp } from "lucide-react";
-import testsData from "@/data/tests.json";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Test {
   id: string;
   title: string;
   subject: string;
-  class: string;
-  type: string;
-  date: string;
-  duration: string;
-  total_marks: number;
+  test_date: string;
+  max_marks: number;
   created_by: string;
-  students_assigned: string[];
 }
 
 interface TestResult {
   test_id: string;
   student_id: string;
-  student_name: string;
   marks_obtained: number;
-  total_marks: number;
-  percentage: number;
-  grade: string;
-  attempt_date: string;
 }
 
 export const StudentTests = () => {
   const [tests, setTests] = useState<Test[]>([]);
   const [results, setResults] = useState<TestResult[]>([]);
-  const currentStudentId = "S001"; // This would come from auth context
+  const currentStudentId = "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c67"; // This would come from auth context
 
   useEffect(() => {
-    // Filter tests assigned to current student
-    const studentTests = testsData.tests.filter(test => 
-      test.students_assigned.includes(currentStudentId)
-    );
-    setTests(studentTests);
-    
-    // Filter results for current student
-    const studentResults = testsData.test_results.filter(result => 
-      result.student_id === currentStudentId
-    );
-    setResults(studentResults);
+    fetchTestsData();
   }, []);
 
+  const fetchTestsData = async () => {
+    try {
+      // Fetch all tests
+      const { data: testsData } = await supabase
+        .from('tests')
+        .select('*');
+      
+      if (testsData) setTests(testsData);
+
+      // Fetch results for current student
+      const { data: resultsData } = await supabase
+        .from('test_results')
+        .select('*')
+        .eq('student_id', currentStudentId);
+      
+      if (resultsData) setResults(resultsData);
+
+    } catch (error) {
+      console.error('Error fetching tests data:', error);
+    }
+  };
+
   const getUpcomingTests = () => {
-    return tests.filter(test => new Date(test.date) > new Date());
+    return tests.filter(test => new Date(test.test_date) > new Date());
   };
 
   const getCompletedTests = () => {
@@ -61,12 +64,20 @@ export const StudentTests = () => {
 
   const getAveragePerformance = () => {
     if (results.length === 0) return 0;
-    return Math.round(results.reduce((sum, result) => sum + result.percentage, 0) / results.length);
+    const totalPercentage = results.reduce((sum, result) => {
+      const test = tests.find(t => t.id === result.test_id);
+      const percentage = test ? (result.marks_obtained / test.max_marks) * 100 : 0;
+      return sum + percentage;
+    }, 0);
+    return Math.round(totalPercentage / results.length);
   };
 
   const getGradeDistribution = () => {
     const grades = results.reduce((acc, result) => {
-      acc[result.grade] = (acc[result.grade] || 0) + 1;
+      const test = tests.find(t => t.id === result.test_id);
+      const percentage = test ? (result.marks_obtained / test.max_marks) * 100 : 0;
+      const grade = percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : 'D';
+      acc[grade] = (acc[grade] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     return grades;
@@ -124,7 +135,11 @@ export const StudentTests = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {results.length > 0 ? Math.max(...results.map(r => r.percentage)) + '%' : 'N/A'}
+              {results.length > 0 ? 
+                Math.max(...results.map(r => {
+                  const test = tests.find(t => t.id === r.test_id);
+                  return test ? Math.round((r.marks_obtained / test.max_marks) * 100) : 0;
+                })) + '%' : 'N/A'}
             </div>
             <p className="text-xs text-muted-foreground">Highest score</p>
           </CardContent>
@@ -170,7 +185,7 @@ export const StudentTests = () => {
         <TabsContent value="upcoming">
           <div className="grid gap-4">
             {upcomingTests.map((test) => {
-              const daysLeft = Math.ceil((new Date(test.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+              const daysLeft = Math.ceil((new Date(test.test_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
               
               return (
                 <Card key={test.id} className="shadow-elegant hover:shadow-glow transition-all">
@@ -178,13 +193,13 @@ export const StudentTests = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg">{test.title}</CardTitle>
-                        <CardDescription>{test.subject} • {test.class} • {test.type}</CardDescription>
+                        <CardDescription>{test.subject}</CardDescription>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Badge variant={daysLeft <= 3 ? 'destructive' : 'outline'}>
                           {daysLeft === 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft} days left`}
                         </Badge>
-                        <Badge variant="secondary">{test.total_marks} marks</Badge>
+                        <Badge variant="secondary">{test.max_marks} marks</Badge>
                       </div>
                     </div>
                   </CardHeader>
@@ -193,11 +208,7 @@ export const StudentTests = () => {
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          {test.date}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {test.duration}
+                          {test.test_date}
                         </div>
                       </div>
                       <div className="flex space-x-2">
@@ -230,6 +241,8 @@ export const StudentTests = () => {
           <div className="grid gap-4">
             {results.map((result) => {
               const test = tests.find(t => t.id === result.test_id);
+              const percentage = test ? Math.round((result.marks_obtained / test.max_marks) * 100) : 0;
+              const grade = percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : 'D';
               
               return (
                 <Card key={result.test_id} className="shadow-elegant">
@@ -238,13 +251,13 @@ export const StudentTests = () => {
                       <div>
                         <CardTitle className="text-lg">{test?.title}</CardTitle>
                         <CardDescription>
-                          {test?.subject} • Attempted on {result.attempt_date}
+                          {test?.subject} • Test Result
                         </CardDescription>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold">{result.percentage}%</div>
-                        <Badge variant={result.grade === 'A' ? 'default' : result.grade === 'B' ? 'secondary' : 'destructive'}>
-                          Grade {result.grade}
+                        <div className="text-2xl font-bold">{percentage}%</div>
+                        <Badge variant={grade === 'A' ? 'default' : grade === 'B' ? 'secondary' : 'destructive'}>
+                          Grade {grade}
                         </Badge>
                       </div>
                     </div>
@@ -252,9 +265,9 @@ export const StudentTests = () => {
                   <CardContent>
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">
-                        Score: {result.marks_obtained}/{result.total_marks} marks
+                        Score: {result.marks_obtained}/{test?.max_marks} marks
                       </div>
-                      <Progress value={result.percentage} className="w-32" />
+                      <Progress value={percentage} className="w-32" />
                     </div>
                   </CardContent>
                 </Card>
