@@ -47,36 +47,15 @@ export const ClassSchedule = () => {
 
   const fetchSchedules = async () => {
     try {
-      // Using mock data for now
-      setSchedules([
-        {
-          id: "1",
-          subject: "Mathematics",
-          class: "Class 10th",
-          day: "Monday",
-          start_time: "09:00",
-          end_time: "10:30",
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "2",
-          subject: "Physics",
-          class: "Class 12th",
-          day: "Tuesday",
-          start_time: "11:00",
-          end_time: "12:30",
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "3",
-          subject: "Chemistry",
-          class: "Class 12th",
-          day: "Wednesday",
-          start_time: "14:00",
-          end_time: "15:30",
-          created_at: new Date().toISOString()
-        }
-      ]);
+      const { data, error } = await supabase
+        .from('class_schedules')
+        .select('*')
+        .order('day', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+
+      setSchedules(data || []);
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -104,11 +83,12 @@ export const ClassSchedule = () => {
     try {
       if (editingSchedule) {
         // Update existing schedule
-        const updatedSchedule = {
-          ...editingSchedule,
-          ...formData
-        };
-        setSchedules(schedules.map(s => s.id === editingSchedule.id ? updatedSchedule : s));
+        const { error } = await supabase
+          .from('class_schedules')
+          .update(formData)
+          .eq('id', editingSchedule.id);
+
+        if (error) throw error;
         
         toast({
           title: "Success",
@@ -116,12 +96,26 @@ export const ClassSchedule = () => {
         });
       } else {
         // Add new schedule
-        const newSchedule: ClassSchedule = {
-          id: Date.now().toString(),
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({
+            title: "Error",
+            description: "You must be logged in to add schedules",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const newSchedule = {
           ...formData,
-          created_at: new Date().toISOString()
+          created_by: user.id
         };
-        setSchedules([...schedules, newSchedule]);
+        
+        const { error } = await supabase
+          .from('class_schedules')
+          .insert([newSchedule]);
+
+        if (error) throw error;
         
         toast({
           title: "Success",
@@ -132,6 +126,7 @@ export const ClassSchedule = () => {
       setFormData({ subject: "", class: "", day: "", start_time: "", end_time: "" });
       setIsDialogOpen(false);
       setEditingSchedule(null);
+      fetchSchedules(); // Refresh the list
     } catch (error) {
       toast({
         title: "Error",
@@ -143,11 +138,19 @@ export const ClassSchedule = () => {
 
   const handleDeleteSchedule = async (id: string) => {
     try {
-      setSchedules(schedules.filter(s => s.id !== id));
+      const { error } = await supabase
+        .from('class_schedules')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Class schedule deleted successfully",
       });
+      
+      fetchSchedules(); // Refresh the list
     } catch (error) {
       toast({
         title: "Error",

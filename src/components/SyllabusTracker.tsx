@@ -61,47 +61,20 @@ export const SyllabusTracker = () => {
 
   const fetchSyllabusItems = async () => {
     try {
-      // Mock data for demonstration
-      setSyllabusItems([
-        {
-          id: "1",
-          subject: "Mathematics",
-          class: "Class 10th",
-          topic: "Quadratic Equations",
-          description: "Introduction to quadratic equations and solving methods",
-          status: "completed",
-          completion_date: "2024-01-15",
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "2",
-          subject: "Physics",
-          class: "Class 12th",
-          topic: "Electromagnetic Induction",
-          description: "Faraday's law and Lenz's law",
-          status: "in-progress",
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "3",
-          subject: "Chemistry",
-          class: "Class 12th",
-          topic: "Organic Chemistry Basics",
-          description: "Introduction to organic compounds and nomenclature",
-          status: "pending",
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "4",
-          subject: "Biology",
-          class: "Class 12th",
-          topic: "Cell Structure",
-          description: "Basic cell structure and organelles",
-          status: "completed",
-          completion_date: "2024-01-10",
-          created_at: new Date().toISOString()
-        }
-      ]);
+      const { data, error } = await supabase
+        .from('syllabus_topics')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Cast status to proper type
+      const typedData = (data || []).map(item => ({
+        ...item,
+        status: item.status as "pending" | "in-progress" | "completed"
+      }));
+
+      setSyllabusItems(typedData);
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -129,12 +102,17 @@ export const SyllabusTracker = () => {
     try {
       if (editingItem) {
         // Update existing item
-        const updatedItem = {
-          ...editingItem,
+        const updateData = {
           ...formData,
-          completion_date: formData.status === "completed" ? new Date().toISOString().split('T')[0] : editingItem.completion_date
+          completion_date: formData.status === "completed" ? new Date().toISOString().split('T')[0] : null
         };
-        setSyllabusItems(syllabusItems.map(item => item.id === editingItem.id ? updatedItem : item));
+        
+        const { error } = await supabase
+          .from('syllabus_topics')
+          .update(updateData)
+          .eq('id', editingItem.id);
+
+        if (error) throw error;
         
         toast({
           title: "Success",
@@ -142,13 +120,27 @@ export const SyllabusTracker = () => {
         });
       } else {
         // Add new item
-        const newItem: SyllabusItem = {
-          id: Date.now().toString(),
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({
+            title: "Error",
+            description: "You must be logged in to add topics",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const newItem = {
           ...formData,
-          completion_date: formData.status === "completed" ? new Date().toISOString().split('T')[0] : undefined,
-          created_at: new Date().toISOString()
+          completion_date: formData.status === "completed" ? new Date().toISOString().split('T')[0] : null,
+          created_by: user.id
         };
-        setSyllabusItems([newItem, ...syllabusItems]);
+        
+        const { error } = await supabase
+          .from('syllabus_topics')
+          .insert([newItem]);
+
+        if (error) throw error;
         
         toast({
           title: "Success",
@@ -159,6 +151,7 @@ export const SyllabusTracker = () => {
       setFormData({ subject: "", class: "", topic: "", description: "", status: "pending" as const });
       setIsDialogOpen(false);
       setEditingItem(null);
+      fetchSyllabusItems(); // Refresh the list
     } catch (error) {
       toast({
         title: "Error",
@@ -170,11 +163,19 @@ export const SyllabusTracker = () => {
 
   const handleDeleteItem = async (id: string) => {
     try {
-      setSyllabusItems(syllabusItems.filter(item => item.id !== id));
+      const { error } = await supabase
+        .from('syllabus_topics')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Syllabus item deleted successfully",
       });
+      
+      fetchSyllabusItems(); // Refresh the list
     } catch (error) {
       toast({
         title: "Error",

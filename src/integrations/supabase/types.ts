@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      class_schedules: {
+        Row: {
+          class: string
+          created_at: string
+          created_by: string
+          day: string
+          end_time: string
+          id: string
+          start_time: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          class: string
+          created_at?: string
+          created_by: string
+          day: string
+          end_time: string
+          id?: string
+          start_time: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          class?: string
+          created_at?: string
+          created_by?: string
+          day?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fees: {
         Row: {
           amount_due: number
@@ -235,6 +271,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      syllabus_topics: {
+        Row: {
+          class: string
+          completion_date: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          status: string
+          subject: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          class: string
+          completion_date?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          status?: string
+          subject: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          class?: string
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          status?: string
+          subject?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       test_results: {
         Row: {
