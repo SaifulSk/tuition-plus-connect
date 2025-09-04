@@ -11,6 +11,7 @@ import { HomeworkManagement } from "@/components/HomeworkManagement";
 import { TestManagement } from "@/components/TestManagement";
 import { ClassSchedule } from "@/components/ClassSchedule";
 import { SyllabusTracker } from "@/components/SyllabusTracker";
+import { AttendanceManagement } from "@/components/AttendanceManagement";
 import { 
   Users, 
   DollarSign, 
@@ -19,7 +20,8 @@ import {
   Calendar,
   TrendingUp,
   Bell,
-  LogOut
+  LogOut,
+  UserCheck
 } from "lucide-react";
 
 export const TeacherDashboard = () => {
@@ -151,6 +153,12 @@ export const TeacherDashboard = () => {
       description: "Track completion", 
       icon: <TrendingUp className="h-5 w-5" />, 
       action: () => setActiveSection("syllabus") 
+    },
+    { 
+      title: "Attendance Management", 
+      description: "Mark student attendance", 
+      icon: <UserCheck className="h-5 w-5" />, 
+      action: () => setActiveSection("attendance") 
     }
   ];
 
@@ -168,6 +176,8 @@ export const TeacherDashboard = () => {
         return <ClassSchedule />;
       case "syllabus":
         return <SyllabusTracker />;
+      case "attendance":
+        return <AttendanceManagement />;
       default:
         return (
           <>

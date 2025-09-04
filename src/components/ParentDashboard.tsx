@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { ParentReports } from "@/components/ParentReports";
+import { ParentAttendance } from "@/components/ParentAttendance";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -14,7 +15,8 @@ import {
   DollarSign,
   MessageCircle,
   Bell,
-  LogOut
+  LogOut,
+  UserCheck
 } from "lucide-react";
 
 export const ParentDashboard = () => {
@@ -115,7 +117,7 @@ export const ParentDashboard = () => {
     { title: "Acknowledge Homework", description: "Review and approve", icon: <ClipboardCheck className="h-5 w-5" />, action: () => setActiveSection("homework") },
     { title: "Fee Payments", description: "View payment history", icon: <DollarSign className="h-5 w-5" />, action: () => setActiveSection("fees") },
     { title: "Teacher Communication", description: "Send messages", icon: <MessageCircle className="h-5 w-5" />, action: () => setActiveSection("communication") },
-    { title: "Attendance Report", description: "Track presence", icon: <Calendar className="h-5 w-5" />, action: () => setActiveSection("attendance") },
+    { title: "Child's Attendance", description: "Track presence", icon: <UserCheck className="h-5 w-5" />, action: () => setActiveSection("attendance") },
     { title: "Child Profile", description: "Update information", icon: <User className="h-5 w-5" />, action: () => setActiveSection("profile") }
   ];
 
@@ -130,7 +132,7 @@ export const ParentDashboard = () => {
       case "communication":
         return <div className="text-center py-8"><MessageCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-medium">Teacher Communication</h3><p className="text-muted-foreground">Send messages to teachers and view updates.</p></div>;
       case "attendance":
-        return <div className="text-center py-8"><Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-medium">Attendance Tracking</h3><p className="text-muted-foreground">Monitor your child's class attendance.</p></div>;
+        return <ParentAttendance />;
       case "profile":
         return <div className="text-center py-8"><User className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-medium">Child Profile</h3><p className="text-muted-foreground">Update your child's information and preferences.</p></div>;
       default:

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { StudentHomework } from "@/components/StudentHomework";
 import { StudentTests } from "@/components/StudentTests";
+import { StudentAttendance } from "@/components/StudentAttendance";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -15,7 +16,8 @@ import {
   Calendar,
   TrendingUp,
   Bell,
-  LogOut
+  LogOut,
+  UserCheck
 } from "lucide-react";
 
 export const StudentDashboard = () => {
@@ -117,7 +119,8 @@ export const StudentDashboard = () => {
     { title: "Post Doubt", description: "Ask your teacher", icon: <MessageCircle className="h-5 w-5" />, action: () => setActiveSection("doubts") },
     { title: "View Schedule", description: "Check class timings", icon: <Calendar className="h-5 w-5" />, action: () => setActiveSection("schedule") },
     { title: "Study Material", description: "Access syllabus", icon: <BookOpen className="h-5 w-5" />, action: () => setActiveSection("materials") },
-    { title: "Progress Report", description: "View your performance", icon: <TrendingUp className="h-5 w-5" />, action: () => setActiveSection("progress") }
+    { title: "Progress Report", description: "View your performance", icon: <TrendingUp className="h-5 w-5" />, action: () => setActiveSection("progress") },
+    { title: "My Attendance", description: "View attendance records", icon: <UserCheck className="h-5 w-5" />, action: () => setActiveSection("attendance") }
   ];
 
   const renderContent = () => {
@@ -134,6 +137,8 @@ export const StudentDashboard = () => {
         return <div className="text-center py-8"><BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-medium">Study Materials</h3><p className="text-muted-foreground">Access notes, books, and resources.</p></div>;
       case "progress":
         return <div className="text-center py-8"><TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-medium">Progress Report</h3><p className="text-muted-foreground">Detailed analysis of your performance.</p></div>;
+      case "attendance":
+        return <StudentAttendance />;
       default:
         return null;
     }
