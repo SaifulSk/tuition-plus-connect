@@ -87,6 +87,17 @@ export const StudentManagement = () => {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to add students",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('students')
         .insert([{
@@ -95,7 +106,7 @@ export const StudentManagement = () => {
           phone: newStudent.phone || null,
           class: newStudent.class,
           subjects: newStudent.subjects.split(',').map(s => s.trim()),
-          user_id: crypto.randomUUID() // Temporary - in real app, this would be from auth
+          user_id: user.id
         }])
         .select()
         .single();
