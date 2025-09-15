@@ -12,6 +12,7 @@ import { TestManagement } from "@/components/TestManagement";
 import { ClassSchedule } from "@/components/ClassSchedule";
 import { SyllabusTracker } from "@/components/SyllabusTracker";
 import { AttendanceManagement } from "@/components/AttendanceManagement";
+import { useTeacherDashboardStats } from "@/hooks/useDashboardStats";
 import { 
   Users, 
   DollarSign, 
@@ -29,6 +30,7 @@ export const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { stats, isLoading: statsLoading } = useTeacherDashboardStats();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -89,28 +91,28 @@ export const TeacherDashboard = () => {
   const dashboardCards = [
     {
       title: "Total Students",
-      value: "24",
+      value: statsLoading ? "..." : stats.totalStudents.toString(),
       description: "Active students",
       icon: <Users className="h-6 w-6" />,
       color: "bg-gradient-primary"
     },
     {
       title: "Monthly Revenue",
-      value: "₹45,000",
+      value: statsLoading ? "..." : stats.monthlyRevenue,
       description: "Current month",
       icon: <DollarSign className="h-6 w-6" />,
       color: "bg-gradient-accent"
     },
     {
       title: "Pending Fees",
-      value: "₹8,500",
+      value: statsLoading ? "..." : stats.pendingFees,
       description: "Outstanding amount",
       icon: <TrendingUp className="h-6 w-6" />,
       color: "bg-gradient-primary"
     },
     {
       title: "Active Classes",
-      value: "12",
+      value: statsLoading ? "..." : stats.activeClasses.toString(),
       description: "This week",
       icon: <Calendar className="h-6 w-6" />,
       color: "bg-gradient-accent"

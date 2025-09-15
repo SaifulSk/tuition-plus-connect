@@ -8,6 +8,7 @@ import { StudentTests } from "@/components/StudentTests";
 import { StudentAttendance } from "@/components/StudentAttendance";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStudentDashboardStats } from "@/hooks/useDashboardStats";
 import { 
   BookOpen, 
   ClipboardList, 
@@ -25,6 +26,7 @@ export const StudentDashboard = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { stats, isLoading: statsLoading } = useStudentDashboardStats();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -85,28 +87,28 @@ export const StudentDashboard = () => {
   const dashboardCards = [
     {
       title: "Pending Homework",
-      value: "3",
+      value: statsLoading ? "..." : stats.pendingHomework.toString(),
       description: "Due this week",
       icon: <ClipboardList className="h-6 w-6" />,
       color: "bg-gradient-accent"
     },
     {
       title: "Upcoming Tests",
-      value: "2",
+      value: statsLoading ? "..." : stats.upcomingTests.toString(),
       description: "This month",
       icon: <Trophy className="h-6 w-6" />,
       color: "bg-gradient-primary"
     },
     {
       title: "Average Score",
-      value: "87%",
+      value: statsLoading ? "..." : stats.averageScore,
       description: "Last 5 tests",
       icon: <TrendingUp className="h-6 w-6" />,
       color: "bg-gradient-accent"
     },
     {
       title: "Classes This Week",
-      value: "5",
+      value: statsLoading ? "..." : stats.scheduledClasses.toString(),
       description: "Scheduled sessions",
       icon: <Calendar className="h-6 w-6" />,
       color: "bg-gradient-primary"

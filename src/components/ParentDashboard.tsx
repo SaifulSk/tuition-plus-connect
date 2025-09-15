@@ -7,6 +7,7 @@ import { ParentReports } from "@/components/ParentReports";
 import { ParentAttendance } from "@/components/ParentAttendance";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useParentDashboardStats } from "@/hooks/useDashboardStats";
 import { 
   User, 
   ClipboardCheck, 
@@ -24,6 +25,7 @@ export const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { stats, isLoading: statsLoading } = useParentDashboardStats();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -84,28 +86,28 @@ export const ParentDashboard = () => {
   const dashboardCards = [
     {
       title: "Child's Attendance",
-      value: "95%",
+      value: statsLoading ? "..." : stats.childAttendance,
       description: "This month",
       icon: <Calendar className="h-6 w-6" />,
       color: "bg-gradient-primary"
     },
     {
       title: "Homework Completion",
-      value: "8/10",
+      value: statsLoading ? "..." : stats.homeworkCompletion,
       description: "This week",
       icon: <ClipboardCheck className="h-6 w-6" />,
       color: "bg-gradient-accent"
     },
     {
       title: "Average Performance",
-      value: "B+",
+      value: statsLoading ? "..." : stats.averagePerformance,
       description: "Current grade",
       icon: <TrendingUp className="h-6 w-6" />,
       color: "bg-gradient-primary"
     },
     {
       title: "Fee Status",
-      value: "Paid",
+      value: statsLoading ? "..." : stats.feeStatus,
       description: "Current month",
       icon: <DollarSign className="h-6 w-6" />,
       color: "bg-gradient-accent"
